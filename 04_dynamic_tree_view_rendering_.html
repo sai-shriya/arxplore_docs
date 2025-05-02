@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>04_dynamic_tree_view_rendering_</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="katex.min.css">
+
+
+    <script type="text/javascript" src="mermaid.min.js" charset="UTF-8"></script>
+
+
+    <link rel="stylesheet" href="style.css">
+
+    <script type="text/javascript" src="sidebar.js"></script>
+
+
+    </script>
+</head>
+
+     
+<body  for="html-export" >
+
+
+    <div class="crossnote markdown-preview  ">
+
+        <h1 id="chapter-4-dynamic-tree-view-rendering">Chapter 4: Dynamic Tree View Rendering </h1>
+        <p>Welcome back! In the <a href="03_frontend_data_representation_.html">previous chapter</a>, we learned how
+            ARXplore takes the simplified JSON data received from the backend and stores it neatly in the browser's
+            memory (<code>parsedData1</code> and <code>parsedData2</code>). We have the blueprints ready on our virtual
+            desk.</p>
+        <p>But how do we actually <em>see</em> these blueprints? Looking at raw JSON text isn't very intuitive for
+            exploring complex structures. We need a way to visualize the hierarchical nature of the ARXML data –
+            something like an interactive folder structure or an organizational chart.</p>
+        <p>This is where <strong>Dynamic Tree View Rendering</strong> comes in. It's the process of taking that
+            structured JSON data and automatically drawing the interactive tree view you see on the screen in ARXplore.
+        </p>
+        <h2 id="the-challenge-drawing-the-blueprint">The Challenge: Drawing the Blueprint </h2>
+        <p>Imagine you have the list of all employees in a company and who reports to whom (our JSON data). Now, you
+            need to draw an organizational chart (the tree view) based on that list. You wouldn't draw the entire chart
+            for a huge company all at once, especially if you only need to see the top levels initially. You'd draw the
+            CEO, then maybe their direct reports, and only draw the departments under a specific Vice President when
+            someone asks to see them (clicks to expand).</p>
+        <p>That's exactly what Dynamic Tree View Rendering does for our ARXML data:</p>
+        <ul>
+            <li><strong>It Reads the Data:</strong> It looks at the nested JSON structure stored in
+                <code>parsedData1</code> (and <code>parsedData2</code> if comparing).</li>
+            <li><strong>It Draws HTML:</strong> It dynamically creates the necessary HTML elements (<code>div</code>,
+                <code>span</code>, <code>i</code> for icons, etc.) to represent each piece of data (like AR-PACKAGE,
+                SHORT-NAME, etc.).</li>
+            <li><strong>It Creates Nesting:</strong> It arranges these HTML elements in a nested way, mirroring the
+                hierarchy in the JSON, creating the parent-child relationships of the tree.</li>
+            <li><strong>It Adds Interactivity:</strong> It adds clickable arrows
+                (<code>&lt;i class="fas fa-caret-right"&gt;&lt;/i&gt;</code>) to nodes that have children, allowing you
+                to expand and collapse branches of the tree.</li>
+            <li><strong>It Adds Context:</strong> It displays useful information like icons based on the type of data
+                (<code>getNodeIcon</code>), the name of the element (<code>&lt;SHORT-NAME&gt;</code>), or its value. It
+                also handles special attributes (<code>@attributes</code>).</li>
+            <li><strong>It's Efficient (Lazy Loading):</strong> Like drawing the org chart section by section, it
+                doesn't generate the HTML for the entire, potentially massive, tree at once. It uses a technique called
+                "lazy loading". It only builds the deeper parts of the tree (<code>createChildNodes</code>) when you
+                click to expand a node that indicates it <code>needsChildren</code>. This keeps the application fast and
+                responsive, even with large files.</li>
+        </ul>
+        <h2 id="how-it-works-from-json-to-interactive-tree">How It Works: From JSON to Interactive Tree </h2>
+        <p>Let's trace the process when the application needs to display the tree for <code>parsedData1</code>.</p>
+        <ol>
+            <li><strong>Trigger:</strong> After the file is processed and the JSON data is stored in
+                <code>parsedData1</code>, the <code>processFiles</code> function (from <a
+                    href="01_ui_state_management___interaction_.html">UI State Management &amp; Interaction</a>) calls
+                <code>updateUI</code>.</li>
+            <li><strong>Initiation:</strong> The <code>updateUI</code> function sees that <code>parsedData1</code>
+                exists and calls the main function responsible for building the tree:
+                <code>buildTreeView(file1TreeContainer, parsedData1, ...)</code>. This function targets the specific
+                HTML <code>div</code> (<code>file1TreeContainer</code>) where the tree should appear.</li>
+            <li><strong>Root Node:</strong> <code>buildTreeView</code> starts by creating the HTML elements for the very
+                top level (the root) of the JSON data (e.g., the <code>&lt;AUTOSAR&gt;</code> tag). It uses helper
+                functions like <code>createNodeHeader</code>.</li>
+            <li><strong>First Level Children (Maybe):</strong> To keep things fast, <code>buildTreeView</code> might
+                only generate the <em>first few levels</em> of the tree immediately (controlled by
+                <code>MAX_INITIAL_DEPTH</code>). For deeper levels, it marks the parent node with a special flag
+                (<code>needsChildren = true</code>).</li>
+            <li><strong>Display:</strong> The initially generated HTML (root and maybe first few levels) is added to the
+                web page, and you see the top part of the tree. Nodes that have hidden children will show a collapsed
+                caret icon (<code>►</code>).</li>
+            <li><strong>User Interaction:</strong> You click the caret icon (<code>►</code>) next to a node (e.g.,
+                <code>AR-PACKAGES</code>) to see its contents.</li>
+            <li><strong>Event Handling:</strong> JavaScript code (<code>handleNodeToggle</code>) listens for this click
+                event.</li>
+            <li><strong>Lazy Loading Trigger:</strong> The <code>handleNodeToggle</code> function checks if the clicked
+                node has the <code>needsChildren = true</code> flag.</li>
+            <li><strong>Generating Children:</strong> If <code>needsChildren</code> is true,
+                <code>handleNodeToggle</code> calls another function, <code>createChildNodes</code>. This function reads
+                the corresponding part of the JSON data for the clicked node and <em>now</em> generates the HTML for its
+                direct children (e.g., the specific <code>AR-PACKAGE</code> elements). It then adds this new HTML inside
+                the parent node's structure in the web page. The <code>needsChildren</code> flag is then set to
+                <code>false</code> for the clicked node, as its children have been loaded.</li>
+            <li><strong>Expansion:</strong> The <code>handleNodeToggle</code> function also updates the caret icon
+                (<code>▼</code>) and makes the newly generated children visible.</li>
+        </ol>
+        <p>This "generate-on-demand" approach ensures that the browser only does the work necessary to display what you
+            currently see, making the application feel much faster.</p>
+        <h2 id="visualizing-the-flow">Visualizing the Flow </h2>
+        <p>Here's a simplified diagram showing how the tree is built and expanded:</p>
+        <div class="mermaid">sequenceDiagram
+            participant UI as updateUI (script.js)
+            participant BTV as buildTreeView
+            participant CNH as createNodeHeader
+            participant User as User
+            participant HNT as handleNodeToggle
+            participant CCN as createChildNodes
+
+            UI-&gt;&gt;BTV: Build tree for parsedData1 in container1
+            BTV-&gt;&gt;CNH: Create header for Root element
+            BTV--&gt;&gt;UI: Initial tree (Root + maybe level 1) displayed
+            Note over UI,User: User sees collapsed tree root
+            User-&gt;&gt;HNT: Clicks caret '►' on 'Root'
+            HNT-&gt;&gt;HNT: Check if 'Root' needs children (needsChildren=true?)
+            alt Needs Children
+            HNT-&gt;&gt;CCN: Generate HTML for Root's children
+            CCN-&gt;&gt;CNH: Create headers for child nodes (recursively)
+            CCN--&gt;&gt;HNT: Returns children HTML
+            HNT-&gt;&gt;HNT: Add children HTML to DOM, Mark Root as loaded (needsChildren=false)
+            end
+            HNT-&gt;&gt;HNT: Update caret '▼', Show children container
+            Note over User,UI: User sees expanded 'Root' node
+        </div>
+        <p>This shows the initial build creating the top level, and then the user click triggering the lazy-loading
+            (<code>handleNodeToggle</code> calling <code>createChildNodes</code>) to generate and display the next level
+            only when needed.</p>
+        <h2 id="diving-into-the-code-simplified-snippets">Diving into the Code (Simplified Snippets) </h2>
+        <p>Let's look at the key JavaScript functions involved.</p>
+        <p><strong>1. Starting the Build (<code>updateUI</code> calling <code>buildTreeView</code>)</strong></p>
+        <pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token comment">// File: compare/static/js/script.js (inside updateUI)</span>
+
+<span class="token keyword keyword-function">function</span> <span class="token function">updateUI</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// ... (other UI logic) ...</span>
+
+    <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span>parsedData1<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment">// Call buildTreeView for the first file/panel</span>
+        <span class="token function">buildTreeView</span><span class="token punctuation">(</span>file1TreeContainer<span class="token punctuation">,</span> parsedData1<span class="token punctuation">,</span> <span class="token string">'file1'</span><span class="token punctuation">,</span> currentDiffMap<span class="token punctuation">,</span> <span class="token string">'left'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span>isCompareMode <span class="token operator">&amp;&amp;</span> parsedData2<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token comment">// Call buildTreeView for the second file/panel if comparing</span>
+            <span class="token function">buildTreeView</span><span class="token punctuation">(</span>file2TreeContainer<span class="token punctuation">,</span> parsedData2<span class="token punctuation">,</span> <span class="token string">'file2'</span><span class="token punctuation">,</span> currentDiffMap<span class="token punctuation">,</span> <span class="token string">'right'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token function">setupScrollSync</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// Link scrolling of the two trees</span>
+        <span class="token punctuation">}</span>
+        <span class="token comment">// ...</span>
+    <span class="token punctuation">}</span>
+    <span class="token comment">// ...</span>
+<span class="token punctuation">}</span>
+</code></pre>
+        <p>This shows <code>updateUI</code> calling <code>buildTreeView</code> for each file that has been processed and
+            its data (<code>parsedData1</code>, <code>parsedData2</code>) is available.</p>
+        <p><strong>2. Building the Initial Tree (<code>buildTreeView</code>)</strong></p>
+        <pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token comment">// File: compare/static/js/script.js (Simplified)</span>
+
+<span class="token keyword keyword-const">const</span> <span class="token constant">MAX_INITIAL_DEPTH</span> <span class="token operator">=</span> <span class="token number">2</span><span class="token punctuation">;</span> <span class="token comment">// Only build first 2 levels initially</span>
+
+<span class="token keyword keyword-function">function</span> <span class="token function">buildTreeView</span><span class="token punctuation">(</span><span class="token parameter">container<span class="token punctuation">,</span> data<span class="token punctuation">,</span> containerId<span class="token punctuation">,</span> diffMap<span class="token punctuation">,</span> side</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    container<span class="token punctuation">.</span><span class="token property-access">innerHTML</span> <span class="token operator">=</span> <span class="token string">''</span><span class="token punctuation">;</span> <span class="token comment">// Clear previous content</span>
+    <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>data <span class="token operator">||</span> <span class="token keyword keyword-typeof">typeof</span> data <span class="token operator">!==</span> <span class="token string">'object'</span><span class="token punctuation">)</span> <span class="token keyword control-flow keyword-return">return</span><span class="token punctuation">;</span> <span class="token comment">// Basic validation</span>
+
+    <span class="token keyword keyword-const">const</span> rootTag <span class="token operator">=</span> <span class="token known-class-name class-name">Object</span><span class="token punctuation">.</span><span class="token method function property-access">keys</span><span class="token punctuation">(</span>data<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">;</span> <span class="token comment">// e.g., "AUTOSAR"</span>
+    <span class="token keyword keyword-const">const</span> rootData <span class="token operator">=</span> data<span class="token punctuation">[</span>rootTag<span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>rootTag <span class="token operator">||</span> rootData <span class="token operator">===</span> <span class="token keyword nil keyword-undefined">undefined</span><span class="token punctuation">)</span> <span class="token keyword control-flow keyword-return">return</span><span class="token punctuation">;</span>
+
+    <span class="token comment">// Create container for the root node</span>
+    <span class="token keyword keyword-const">const</span> rootNodeContainer <span class="token operator">=</span> <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token method function property-access">createElement</span><span class="token punctuation">(</span><span class="token string">'div'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    rootNodeContainer<span class="token punctuation">.</span><span class="token property-access">className</span> <span class="token operator">=</span> <span class="token string">'tree-node-container root-node'</span><span class="token punctuation">;</span>
+
+    <span class="token comment">// Create the visible header part of the root node</span>
+    <span class="token keyword keyword-const">const</span> rootNodeHeader <span class="token operator">=</span> <span class="token function">createNodeHeader</span><span class="token punctuation">(</span>rootTag<span class="token punctuation">,</span> rootData<span class="token punctuation">,</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>containerId<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">-root</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">,</span> <span class="token punctuation">[</span>rootTag<span class="token punctuation">]</span><span class="token punctuation">,</span> diffMap<span class="token punctuation">,</span> side<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    rootNodeContainer<span class="token punctuation">.</span><span class="token method function property-access">appendChild</span><span class="token punctuation">(</span>rootNodeHeader<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment">// Create the (initially hidden) container for children</span>
+    <span class="token keyword keyword-const">const</span> childrenContainer <span class="token operator">=</span> <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token method function property-access">createElement</span><span class="token punctuation">(</span><span class="token string">'div'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    childrenContainer<span class="token punctuation">.</span><span class="token property-access">className</span> <span class="token operator">=</span> <span class="token string">'children-container'</span><span class="token punctuation">;</span>
+    rootNodeContainer<span class="token punctuation">.</span><span class="token method function property-access">appendChild</span><span class="token punctuation">(</span>childrenContainer<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    container<span class="token punctuation">.</span><span class="token method function property-access">appendChild</span><span class="token punctuation">(</span>rootNodeContainer<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// Add root to the page</span>
+
+    <span class="token comment">// Expand root and potentially load/expand initial children</span>
+    <span class="token keyword keyword-const">const</span> caret <span class="token operator">=</span> rootNodeHeader<span class="token punctuation">.</span><span class="token method function property-access">querySelector</span><span class="token punctuation">(</span><span class="token string">'.caret-icon:not(.caret-placeholder)'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span>caret<span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token comment">// If root has children</span>
+        childrenContainer<span class="token punctuation">.</span><span class="token property-access">classList</span><span class="token punctuation">.</span><span class="token method function property-access">add</span><span class="token punctuation">(</span><span class="token string">'expanded'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        caret<span class="token punctuation">.</span><span class="token property-access">classList</span><span class="token punctuation">.</span><span class="token method function property-access">add</span><span class="token punctuation">(</span><span class="token string">'expanded'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        rootNodeHeader<span class="token punctuation">.</span><span class="token property-access">dataset</span><span class="token punctuation">.</span><span class="token property-access">needsChildren</span> <span class="token operator">=</span> <span class="token string">'true'</span><span class="token punctuation">;</span> <span class="token comment">// Mark root children for loading</span>
+
+        <span class="token comment">// Trigger initial load/expansion up to MAX_INITIAL_DEPTH</span>
+        <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span><span class="token number">0</span> <span class="token operator">&lt;</span> <span class="token constant">MAX_INITIAL_DEPTH</span> <span class="token operator">&amp;&amp;</span> rootNodeHeader<span class="token punctuation">.</span><span class="token property-access">dataset</span><span class="token punctuation">.</span><span class="token property-access">needsChildren</span> <span class="token operator">===</span> <span class="token string">'true'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token function">createChildNodes</span><span class="token punctuation">(</span>rootData<span class="token punctuation">,</span> childrenContainer<span class="token punctuation">,</span> rootTag<span class="token punctuation">,</span> <span class="token spread operator">...</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// Load level 1</span>
+            rootNodeHeader<span class="token punctuation">.</span><span class="token property-access">dataset</span><span class="token punctuation">.</span><span class="token property-access">needsChildren</span> <span class="token operator">=</span> <span class="token string">'false'</span><span class="token punctuation">;</span> <span class="token comment">// Mark as loaded</span>
+            <span class="token function">expandChildrenRecursively</span><span class="token punctuation">(</span>childrenContainer<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// Expand deeper if needed</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+        <p>This function sets up the main container, finds the root element in the JSON, creates the HTML for the root
+            node's header and its children's container, and then potentially triggers the loading of the first few
+            levels using <code>createChildNodes</code> and <code>expandChildrenRecursively</code>.</p>
+        <p><strong>3. Creating a Node's Header (<code>createNodeHeader</code>)</strong></p>
+        <pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token comment">// File: compare/static/js/script.js (Simplified)</span>
+
+<span class="token keyword keyword-function">function</span> <span class="token function">createNodeHeader</span><span class="token punctuation">(</span><span class="token parameter">key<span class="token punctuation">,</span> data<span class="token punctuation">,</span> nodeId<span class="token punctuation">,</span> path<span class="token punctuation">,</span> diffMap<span class="token punctuation">,</span> side<span class="token punctuation">,</span> depth</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword keyword-const">const</span> nodeHeader <span class="token operator">=</span> <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token method function property-access">createElement</span><span class="token punctuation">(</span><span class="token string">'div'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    nodeHeader<span class="token punctuation">.</span><span class="token property-access">className</span> <span class="token operator">=</span> <span class="token string">'tree-node-header'</span><span class="token punctuation">;</span>
+    <span class="token comment">// Store info like path, side for later use</span>
+    nodeHeader<span class="token punctuation">.</span><span class="token property-access">dataset</span><span class="token punctuation">.</span><span class="token property-access">path</span> <span class="token operator">=</span> <span class="token known-class-name class-name">JSON</span><span class="token punctuation">.</span><span class="token method function property-access">stringify</span><span class="token punctuation">(</span>path<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    nodeHeader<span class="token punctuation">.</span><span class="token property-access">dataset</span><span class="token punctuation">.</span><span class="token property-access">side</span> <span class="token operator">=</span> side<span class="token punctuation">;</span>
+
+    <span class="token keyword keyword-const">const</span> isObject <span class="token operator">=</span> <span class="token keyword keyword-typeof">typeof</span> data <span class="token operator">===</span> <span class="token string">'object'</span> <span class="token operator">&amp;&amp;</span> data <span class="token operator">!==</span> <span class="token keyword null nil keyword-null">null</span><span class="token punctuation">;</span>
+    <span class="token keyword keyword-const">const</span> hasExpandableChildren <span class="token operator">=</span> isObject <span class="token operator">&amp;&amp;</span> <span class="token known-class-name class-name">Object</span><span class="token punctuation">.</span><span class="token method function property-access">keys</span><span class="token punctuation">(</span>data<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">filter</span><span class="token punctuation">(</span><span class="token parameter">k</span> <span class="token arrow operator">=&gt;</span> k <span class="token operator">!==</span> <span class="token string">'@attributes'</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token property-access">length</span> <span class="token operator">&gt;</span> <span class="token number">0</span><span class="token punctuation">;</span>
+
+    <span class="token comment">// 1. Caret (Arrow)</span>
+    <span class="token keyword keyword-const">const</span> caret <span class="token operator">=</span> <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token method function property-access">createElement</span><span class="token punctuation">(</span><span class="token string">'span'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    caret<span class="token punctuation">.</span><span class="token property-access">className</span> <span class="token operator">=</span> hasExpandableChildren <span class="token operator">?</span> <span class="token string">'fas fa-caret-right caret-icon'</span> <span class="token operator">:</span> <span class="token string">'caret-placeholder'</span><span class="token punctuation">;</span>
+    nodeHeader<span class="token punctuation">.</span><span class="token method function property-access">appendChild</span><span class="token punctuation">(</span>caret<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment">// 2. Icon</span>
+    <span class="token keyword keyword-const">const</span> icon <span class="token operator">=</span> <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token method function property-access">createElement</span><span class="token punctuation">(</span><span class="token string">'i'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    icon<span class="token punctuation">.</span><span class="token property-access">className</span> <span class="token operator">=</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">fas </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span><span class="token function">getNodeIcon</span><span class="token punctuation">(</span>key<span class="token punctuation">,</span> data<span class="token punctuation">)</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> node-icon</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">;</span> <span class="token comment">// Get icon based on key/data</span>
+    nodeHeader<span class="token punctuation">.</span><span class="token method function property-access">appendChild</span><span class="token punctuation">(</span>icon<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment">// 3. Name (Tag Name + potentially SHORT-NAME)</span>
+    <span class="token keyword keyword-const">const</span> nameSpan <span class="token operator">=</span> <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token method function property-access">createElement</span><span class="token punctuation">(</span><span class="token string">'span'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    nameSpan<span class="token punctuation">.</span><span class="token property-access">className</span> <span class="token operator">=</span> <span class="token string">'tag-name'</span><span class="token punctuation">;</span>
+    nameSpan<span class="token punctuation">.</span><span class="token property-access">textContent</span> <span class="token operator">=</span> key<span class="token punctuation">;</span>
+    <span class="token comment">// Add (SHORT-NAME) if available</span>
+    <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span>isObject <span class="token operator">&amp;&amp;</span> data<span class="token punctuation">[</span><span class="token string">'SHORT-NAME'</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        nameSpan<span class="token punctuation">.</span><span class="token property-access">innerHTML</span> <span class="token operator">+=</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token html language-html"> <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>span</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">'</span>short-name-value<span class="token punctuation">'</span></span><span class="token punctuation">&gt;</span></span>(<span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>data<span class="token punctuation">[</span><span class="token string">'SHORT-NAME'</span><span class="token punctuation">]</span><span class="token interpolation-punctuation punctuation">}</span></span>)<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>span</span><span class="token punctuation">&gt;</span></span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    nodeHeader<span class="token punctuation">.</span><span class="token method function property-access">appendChild</span><span class="token punctuation">(</span>nameSpan<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment">// 4. Value (for simple types like strings/numbers)</span>
+    <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>isObject <span class="token operator">&amp;&amp;</span> data <span class="token operator">!==</span> <span class="token keyword null nil keyword-null">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword keyword-const">const</span> valueSpan <span class="token operator">=</span> <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token method function property-access">createElement</span><span class="token punctuation">(</span><span class="token string">'span'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        valueSpan<span class="token punctuation">.</span><span class="token property-access">className</span> <span class="token operator">=</span> <span class="token string">'tree-value'</span><span class="token punctuation">;</span>
+        valueSpan<span class="token punctuation">.</span><span class="token property-access">textContent</span> <span class="token operator">=</span> <span class="token known-class-name class-name">String</span><span class="token punctuation">(</span>data<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        nodeHeader<span class="token punctuation">.</span><span class="token method function property-access">appendChild</span><span class="token punctuation">(</span>valueSpan<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment">// 5. Attributes Indicator (if @attributes exist)</span>
+    <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span>isObject <span class="token operator">&amp;&amp;</span> data<span class="token punctuation">[</span><span class="token string">'@attributes'</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+         <span class="token comment">// ... logic to create attribute indicator/tooltip ...</span>
+         nodeHeader<span class="token punctuation">.</span><span class="token method function property-access">appendChild</span><span class="token punctuation">(</span>attrIndicator<span class="token punctuation">)</span><span class="token punctuation">;</span>
+         nodeHeader<span class="token punctuation">.</span><span class="token method function property-access">appendChild</span><span class="token punctuation">(</span>attrInfoSpan<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// Hidden tooltip part</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment">// Add click listener ONLY if it can be expanded</span>
+    <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span>hasExpandableChildren<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        nodeHeader<span class="token punctuation">.</span><span class="token method function property-access">addEventListener</span><span class="token punctuation">(</span><span class="token string">'click'</span><span class="token punctuation">,</span> handleNodeToggle<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token comment">// IMPORTANT: Mark that children might need loading on first expand</span>
+        nodeHeader<span class="token punctuation">.</span><span class="token property-access">dataset</span><span class="token punctuation">.</span><span class="token property-access">needsChildren</span> <span class="token operator">=</span> <span class="token string">'true'</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword control-flow keyword-return">return</span> nodeHeader<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+        <p>This function builds the visible part of a single tree node. It creates the caret (<code>►</code>), icon
+            (like <code>fa-folder</code>), name (<code>AR-PACKAGE</code>), and potentially a value or attribute
+            indicator. Crucially, if the node represents an object with children, it adds the
+            <code>handleNodeToggle</code> click listener and sets <code>needsChildren = true</code>.</p>
+        <p><strong>4. Handling Clicks (<code>handleNodeToggle</code>)</strong></p>
+        <pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token comment">// File: compare/static/js/script.js (Simplified)</span>
+
+<span class="token keyword keyword-function">function</span> <span class="token function">handleNodeToggle</span><span class="token punctuation">(</span><span class="token parameter">e</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    e<span class="token punctuation">.</span><span class="token method function property-access">stopPropagation</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// Prevent click bubbling to parent nodes</span>
+
+    <span class="token keyword keyword-const">const</span> nodeHeader <span class="token operator">=</span> e<span class="token punctuation">.</span><span class="token property-access">currentTarget</span><span class="token punctuation">;</span>
+    <span class="token keyword keyword-const">const</span> nodeContainer <span class="token operator">=</span> nodeHeader<span class="token punctuation">.</span><span class="token property-access">parentElement</span><span class="token punctuation">;</span>
+    <span class="token keyword keyword-const">const</span> childrenContainer <span class="token operator">=</span> nodeContainer<span class="token punctuation">.</span><span class="token method function property-access">querySelector</span><span class="token punctuation">(</span><span class="token string">':scope &gt; .children-container'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword keyword-const">const</span> caret <span class="token operator">=</span> nodeHeader<span class="token punctuation">.</span><span class="token method function property-access">querySelector</span><span class="token punctuation">(</span><span class="token string">'.caret-icon:not(.caret-placeholder)'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>childrenContainer <span class="token operator">||</span> <span class="token operator">!</span>caret<span class="token punctuation">)</span> <span class="token keyword control-flow keyword-return">return</span><span class="token punctuation">;</span> <span class="token comment">// Should not happen</span>
+
+    <span class="token comment">// Toggle expanded state (visuals)</span>
+    <span class="token keyword keyword-const">const</span> isExpanded <span class="token operator">=</span> childrenContainer<span class="token punctuation">.</span><span class="token property-access">classList</span><span class="token punctuation">.</span><span class="token method function property-access">toggle</span><span class="token punctuation">(</span><span class="token string">'expanded'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    caret<span class="token punctuation">.</span><span class="token property-access">classList</span><span class="token punctuation">.</span><span class="token method function property-access">toggle</span><span class="token punctuation">(</span><span class="token string">'expanded'</span><span class="token punctuation">,</span> isExpanded<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment">// --- Lazy Loading Logic ---</span>
+    <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span>isExpanded <span class="token operator">&amp;&amp;</span> nodeHeader<span class="token punctuation">.</span><span class="token property-access">dataset</span><span class="token punctuation">.</span><span class="token property-access">needsChildren</span> <span class="token operator">===</span> <span class="token string">'true'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment">// Use setTimeout to allow UI update (caret rotation) before loading</span>
+        <span class="token function">setTimeout</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=&gt;</span> <span class="token punctuation">{</span>
+            <span class="token keyword keyword-const">const</span> path <span class="token operator">=</span> <span class="token known-class-name class-name">JSON</span><span class="token punctuation">.</span><span class="token method function property-access">parse</span><span class="token punctuation">(</span>nodeHeader<span class="token punctuation">.</span><span class="token property-access">dataset</span><span class="token punctuation">.</span><span class="token property-access">path</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword keyword-const">const</span> side <span class="token operator">=</span> nodeHeader<span class="token punctuation">.</span><span class="token property-access">dataset</span><span class="token punctuation">.</span><span class="token property-access">side</span><span class="token punctuation">;</span>
+            <span class="token comment">// Find the actual data object for this node in parsedData1/2</span>
+            <span class="token keyword keyword-const">const</span> data <span class="token operator">=</span> <span class="token function">getDataFromPath</span><span class="token punctuation">(</span>path<span class="token punctuation">,</span> side<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+            <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span>data <span class="token operator">!==</span> <span class="token keyword nil keyword-undefined">undefined</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token comment">// Call function to generate the child nodes' HTML</span>
+                <span class="token function">createChildNodes</span><span class="token punctuation">(</span>data<span class="token punctuation">,</span> childrenContainer<span class="token punctuation">,</span> path<span class="token punctuation">[</span>path<span class="token punctuation">.</span><span class="token property-access">length</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token spread operator">...</span><span class="token punctuation">,</span> path<span class="token punctuation">,</span> <span class="token spread operator">...</span><span class="token punctuation">,</span> side<span class="token punctuation">,</span> <span class="token spread operator">...</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token comment">// Mark as loaded so we don't load again</span>
+                nodeHeader<span class="token punctuation">.</span><span class="token property-access">dataset</span><span class="token punctuation">.</span><span class="token property-access">needsChildren</span> <span class="token operator">=</span> <span class="token string">'false'</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span> <span class="token keyword control-flow keyword-else">else</span> <span class="token punctuation">{</span>
+                <span class="token comment">// Handle error: data not found</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// Small delay</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+        <p>This function runs when you click a node's header. It toggles the visual state (caret icon, visibility of the
+            children container). The important part is the check: if the node <em>is being expanded</em>
+            (<code>isExpanded</code>) and <em>hasn't loaded its children yet</em>
+            (<code>needsChildren === 'true'</code>), it calls <code>createChildNodes</code> to generate them and then
+            marks <code>needsChildren</code> as <code>false</code>.</p>
+        <p><strong>5. Generating Child Nodes (<code>createChildNodes</code>)</strong></p>
+        <pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token comment">// File: compare/static/js/script.js (Simplified)</span>
+
+<span class="token keyword keyword-function">function</span> <span class="token function">createChildNodes</span><span class="token punctuation">(</span><span class="token parameter">data<span class="token punctuation">,</span> childrenContainer<span class="token punctuation">,</span> parentKey<span class="token punctuation">,</span> <span class="token spread operator">...</span><span class="token punctuation">,</span> parentPath<span class="token punctuation">,</span> <span class="token spread operator">...</span><span class="token punctuation">,</span> side<span class="token punctuation">,</span> currentDepth</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    childrenContainer<span class="token punctuation">.</span><span class="token property-access">innerHTML</span> <span class="token operator">=</span> <span class="token string">''</span><span class="token punctuation">;</span> <span class="token comment">// Clear placeholder/loading text</span>
+
+    <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span><span class="token keyword keyword-typeof">typeof</span> data <span class="token operator">!==</span> <span class="token string">'object'</span> <span class="token operator">||</span> data <span class="token operator">===</span> <span class="token keyword null nil keyword-null">null</span><span class="token punctuation">)</span> <span class="token keyword control-flow keyword-return">return</span><span class="token punctuation">;</span> <span class="token comment">// Can't make children from primitives</span>
+
+    <span class="token comment">// Get and sort keys of the object/array</span>
+    <span class="token keyword keyword-const">const</span> sortedKeys <span class="token operator">=</span> <span class="token function">sortObjectKeys</span><span class="token punctuation">(</span>data<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    sortedKeys<span class="token punctuation">.</span><span class="token method function property-access">forEach</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter">childKey<span class="token punctuation">,</span> index</span><span class="token punctuation">)</span> <span class="token arrow operator">=&gt;</span> <span class="token punctuation">{</span>
+        <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span>childKey <span class="token operator">===</span> <span class="token string">'@attributes'</span><span class="token punctuation">)</span> <span class="token keyword control-flow keyword-return">return</span><span class="token punctuation">;</span> <span class="token comment">// Skip attributes object</span>
+
+        <span class="token keyword keyword-const">const</span> childData <span class="token operator">=</span> data<span class="token punctuation">[</span>childKey<span class="token punctuation">]</span><span class="token punctuation">;</span>
+        <span class="token keyword keyword-const">const</span> childNodeId <span class="token operator">=</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>parentNodeId<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">-</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>childKey<span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">;</span> <span class="token comment">// Create unique ID</span>
+        <span class="token keyword keyword-const">const</span> childPath <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token spread operator">...</span>parentPath<span class="token punctuation">,</span> childKey<span class="token punctuation">]</span><span class="token punctuation">;</span> <span class="token comment">// Extend the path</span>
+
+        <span class="token comment">// Recursively call createTreeNode for each child</span>
+        <span class="token comment">// createTreeNode internally calls createNodeHeader</span>
+        <span class="token keyword keyword-const">const</span> childNode <span class="token operator">=</span> <span class="token function">createTreeNode</span><span class="token punctuation">(</span>childKey<span class="token punctuation">,</span> childData<span class="token punctuation">,</span> childNodeId<span class="token punctuation">,</span> childPath<span class="token punctuation">,</span> currentDiffMap<span class="token punctuation">,</span> side<span class="token punctuation">,</span> currentDepth<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token comment">// Add the newly created child node HTML to the parent's children container</span>
+        childrenContainer<span class="token punctuation">.</span><span class="token method function property-access">appendChild</span><span class="token punctuation">(</span>childNode<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token comment">// Comparison Mode: Add placeholders if needed (logic omitted for simplicity)</span>
+        <span class="token comment">// ...</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+        <p>This function is the core of the lazy loading. It takes the data for the parent node, iterates through its
+            children (keys or array items), and for each child, it calls <code>createTreeNode</code> (which uses
+            <code>createNodeHeader</code>) to generate the HTML structure. This generated HTML is then appended to the
+            <code>childrenContainer</code>, making it visible on the page.</p>
+        <p><strong>Styling with CSS</strong></p>
+        <p>While JavaScript creates the structure (<code>div</code>, <code>span</code>, etc.) and adds classes (like
+            <code>tree-node-header</code>, <code>expanded</code>), the actual appearance (colors, indentation, icons,
+            lines, hiding/showing) is controlled by CSS rules in <code>compare/static/css/style.css</code>. For example:
+        </p>
+        <pre data-role="codeBlock" data-info="css" class="language-css css"><code><span class="token comment">/* File: compare/static/css/style.css (Conceptual) */</span>
+
+<span class="token selector"><span class="token class">.tree-node-container</span></span> <span class="token punctuation">{</span>
+    <span class="token property">position</span><span class="token punctuation">:</span> relative<span class="token punctuation">;</span>
+    <span class="token property">padding-left</span><span class="token punctuation">:</span> <span class="token number">20</span><span class="token unit">px</span><span class="token punctuation">;</span> <span class="token comment">/* Indentation */</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">/* Lines connecting nodes */</span>
+<span class="token selector"><span class="token class">.tree-node-container</span><span class="token pseudo-element">::before</span></span> <span class="token punctuation">{</span> <span class="token comment">/* Vertical line */</span>
+    <span class="token comment">/* ... styles for vertical line ... */</span>
+<span class="token punctuation">}</span>
+<span class="token selector"><span class="token class">.tree-node-header</span><span class="token pseudo-element">::before</span></span> <span class="token punctuation">{</span> <span class="token comment">/* Horizontal line */</span>
+    <span class="token comment">/* ... styles for horizontal line ... */</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector"><span class="token class">.children-container</span></span> <span class="token punctuation">{</span>
+    <span class="token property">display</span><span class="token punctuation">:</span> none<span class="token punctuation">;</span> <span class="token comment">/* Hide children by default */</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector"><span class="token class">.children-container</span><span class="token class">.expanded</span></span> <span class="token punctuation">{</span>
+    <span class="token property">display</span><span class="token punctuation">:</span> block<span class="token punctuation">;</span> <span class="token comment">/* Show children when expanded */</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector"><span class="token class">.caret-icon</span></span> <span class="token punctuation">{</span>
+    <span class="token comment">/* ... styles for caret icon ... */</span>
+    <span class="token property">transition</span><span class="token punctuation">:</span> transform <span class="token number">0.15</span><span class="token unit">s</span> ease<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token selector"><span class="token class">.caret-icon</span><span class="token class">.expanded</span></span> <span class="token punctuation">{</span>
+     <span class="token property">transform</span><span class="token punctuation">:</span> <span class="token function">rotate</span><span class="token punctuation">(</span><span class="token number">90</span><span class="token unit">deg</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">/* Rotate caret when expanded */</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">/* Styles for different icons, names, values */</span>
+<span class="token selector"><span class="token class">.node-icon</span></span> <span class="token punctuation">{</span> <span class="token comment">/* ... */</span> <span class="token punctuation">}</span>
+<span class="token selector"><span class="token class">.tag-name</span></span> <span class="token punctuation">{</span> <span class="token comment">/* ... */</span> <span class="token punctuation">}</span>
+<span class="token selector"><span class="token class">.short-name-value</span></span> <span class="token punctuation">{</span> <span class="token comment">/* ... */</span> <span class="token punctuation">}</span>
+<span class="token selector"><span class="token class">.tree-value</span></span> <span class="token punctuation">{</span> <span class="token comment">/* ... */</span> <span class="token punctuation">}</span>
+
+<span class="token comment">/* Highlight differences */</span>
+<span class="token selector"><span class="token class">.tree-node-container</span><span class="token class">.modified</span> <span class="token combinator">&gt;</span> <span class="token class">.tree-node-header</span></span> <span class="token punctuation">{</span>
+    <span class="token property">background-color</span><span class="token punctuation">:</span> <span class="token function">var</span><span class="token punctuation">(</span><span class="token variable">--modified-bg</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token property">border-left</span><span class="token punctuation">:</span> <span class="token number">3</span><span class="token unit">px</span> solid <span class="token function">var</span><span class="token punctuation">(</span><span class="token variable">--modified-border</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token selector"><span class="token class">.empty-space</span></span> <span class="token punctuation">{</span> <span class="token comment">/* Placeholder for added/deleted */</span>
+   <span class="token comment">/* ... styles for placeholders ... */</span>
+<span class="token punctuation">}</span>
+</code></pre>
+        <p>CSS handles the visual presentation based on the HTML structure and classes generated by the JavaScript.</p>
+        <h2 id="conclusion">Conclusion </h2>
+        <p>Dynamic Tree View Rendering is the engine that translates the structured JSON data held in the browser into
+            the interactive, hierarchical tree view you use to explore ARXML files. By dynamically generating HTML
+            elements, adding interactivity for expansion and collapse, and using lazy loading
+            (<code>needsChildren</code>) to build the tree on demand, ARXplore provides a responsive and efficient way
+            to visualize even large and complex data structures.</p>
+        <p>We've seen how the JSON data is traversed and converted into nested HTML, and how user clicks trigger the
+            generation of deeper levels. Now that we can view the structure of one or two files, how does ARXplore
+            figure out the <em>differences</em> between them when you load two files?</p>
+        <p>In the next chapter, we'll dive into the logic that compares the two JSON data structures
+            (<code>parsedData1</code> and <code>parsedData2</code>) right within your browser.</p>
+        <p>Next: <a href="05_client_side_comparison_logic_.html">Client-Side Comparison Logic</a></p>
+        <hr>
+        <p>Generated by <a href="https://github.com/The-Pocket/Tutorial-Codebase-Knowledge">AI Codebase Knowledge
+                Builder</a></p>
+
+    </div>
+
+
+
+
+    <script type="module">
+        // TODO: If ZenUML gets integrated into mermaid in the future,
+        //      we can remove the following lines.
+
+
+        var MERMAID_CONFIG = ({ "startOnLoad": false });
+        if (typeof MERMAID_CONFIG !== 'undefined') {
+            MERMAID_CONFIG.startOnLoad = false
+            MERMAID_CONFIG.cloneCssStyles = false
+            MERMAID_CONFIG.theme = "default"
+        }
+
+        mermaid.initialize(MERMAID_CONFIG || {})
+        if (typeof (window['Reveal']) !== 'undefined') {
+            function mermaidRevealHelper(event) {
+                var currentSlide = event.currentSlide
+                var diagrams = currentSlide.querySelectorAll('.mermaid')
+                for (var i = 0; i < diagrams.length; i++) {
+                    var diagram = diagrams[i]
+                    if (!diagram.hasAttribute('data-processed')) {
+                        mermaid.init(null, diagram, () => {
+                            Reveal.slide(event.indexh, event.indexv)
+                        })
+                    }
+                }
+            }
+            Reveal.addEventListener('slidetransitionend', mermaidRevealHelper)
+            Reveal.addEventListener('ready', mermaidRevealHelper)
+            await mermaid.run({
+                nodes: document.querySelectorAll('.mermaid')
+            })
+        } else {
+            await mermaid.run({
+                nodes: document.querySelectorAll('.mermaid')
+            })
+        }
+    </script>
+
+
+
+
+</body>
+
+</html>

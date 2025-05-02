@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>03_frontend_data_representation_</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="katex.min.css">
+
+
+  <script type="text/javascript" src="mermaid.min.js" charset="UTF-8"></script>
+
+
+  <link rel="stylesheet" href="style.css">
+  <script type="text/javascript" src="sidebar.js"></script>
+
+
+
+  </script>
+</head>
+
+     
+<body  for="html-export" >
+
+
+  <div class="crossnote markdown-preview  ">
+
+    <h1 id="chapter-3-frontend-data-representation">Chapter 3: Frontend Data Representation </h1>
+    <p>Welcome back! In the <a href="02_arxml_file_processing_.html">previous chapter</a>, we saw how ARXplore sends
+      your raw ARXML file to a backend "mailroom clerk" who translates it into a much simpler, organized format called
+      JSON. This JSON summary is then sent back to your web browser.</p>
+    <p>Now, the question is: what does the browser <em>do</em> with this JSON data once it receives it? It needs to keep
+      this information handy to build the visual tree and, if you uploaded two files, to compare them.</p>
+    <p>This is where <strong>Frontend Data Representation</strong> comes in. It's all about how the browser stores and
+      manages this structured JSON data in its own memory, ready for immediate use.</p>
+    <h2 id="the-problem-keeping-blueprints-accessible">The Problem: Keeping Blueprints Accessible </h2>
+    <p>Imagine the backend sent back the simplified JSON blueprints for our AUTOSAR project. We could, in theory, ask
+      the backend for these blueprints every single time we want to look at a specific part or compare two sections. But
+      that would be like an engineer running back to the central archive room every few minutes! It's slow and
+      inefficient.</p>
+    <p>Instead, we want the engineer (our browser) to keep a working copy of the blueprints right on their desk after
+      getting them the first time. This way, they can quickly refer to them whenever needed without going back to the
+      archive (the backend).</p>
+    <h2 id="the-solution-storing-data-in-browser-memory">The Solution: Storing Data in Browser Memory </h2>
+    <p>The JavaScript code running in your browser can create variables to hold information. After the JSON data arrives
+      from the backend, ARXplore stores it directly into specific JavaScript variables.</p>
+    <ul>
+      <li>If you process the first file, its JSON data is stored in a variable called <code>parsedData1</code>.</li>
+      <li>If you process a second file for comparison, its JSON data is stored in <code>parsedData2</code>.</li>
+    </ul>
+    <p>Think of <code>parsedData1</code> and <code>parsedData2</code> as folders on the engineer's desk, each holding
+      the structured blueprint (JSON data) for one of the files.</p>
+    <pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token comment">// File: compare/static/js/script.js</span>
+
+<span class="token comment">// --- State ---</span>
+<span class="token comment">// ... other state variables ...</span>
+<span class="token keyword keyword-let">let</span> parsedData1 <span class="token operator">=</span> <span class="token keyword null nil keyword-null">null</span><span class="token punctuation">;</span> <span class="token comment">// Holds the processed JSON for file 1</span>
+<span class="token keyword keyword-let">let</span> parsedData2 <span class="token operator">=</span> <span class="token keyword null nil keyword-null">null</span><span class="token punctuation">;</span> <span class="token comment">// Holds the processed JSON for file 2</span>
+<span class="token comment">// ...</span>
+</code></pre>
+    <p>This snippet from our main JavaScript file shows where these "folders" are declared. Initially, they are
+      <code>null</code> (empty), but they get filled once the backend processing is successful.</p>
+    <h2 id="what-does-the-stored-data-look-like-json-structure">What Does the Stored Data Look Like? (JSON Structure)
+    </h2>
+    <p>The JSON data received from the backend and stored in <code>parsedData1</code> / <code>parsedData2</code> is
+      essentially a structured representation of your original ARXML file. The <code>xmltodict</code> tool used in the
+      backend converts XML tags into nested JavaScript objects and lists (arrays).</p>
+    <p>For example, a tiny piece of ARXML like this:</p>
+    <pre data-role="codeBlock" data-info="xml" class="language-xml xml"><code><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>AUTOSAR</span><span class="token punctuation">&gt;</span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>AR-PACKAGES</span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>AR-PACKAGE</span><span class="token punctuation">&gt;</span></span>
+      <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>SHORT-NAME</span><span class="token punctuation">&gt;</span></span>MyPackage<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>SHORT-NAME</span><span class="token punctuation">&gt;</span></span>
+      <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>ELEMENTS</span><span class="token punctuation">&gt;</span></span>
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>SW-COMPONENT-PROTOTYPE</span><span class="token punctuation">&gt;</span></span>
+           <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>SHORT-NAME</span><span class="token punctuation">&gt;</span></span>MyComponent<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>SHORT-NAME</span><span class="token punctuation">&gt;</span></span>
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>SW-COMPONENT-PROTOTYPE</span><span class="token punctuation">&gt;</span></span>
+      <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>ELEMENTS</span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>AR-PACKAGE</span><span class="token punctuation">&gt;</span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>AR-PACKAGES</span><span class="token punctuation">&gt;</span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>AUTOSAR</span><span class="token punctuation">&gt;</span></span>
+</code></pre>
+    <p>Might be represented in the stored JSON (<code>parsedData1</code>) something like this (simplified):</p>
+    <pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token comment">// Conceptual Example of stored JSON data in parsedData1</span>
+<span class="token punctuation">{</span>
+  <span class="token string-property property">"AUTOSAR"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token string-property property">"AR-PACKAGES"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token string-property property">"AR-PACKAGE"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token string-property property">"SHORT-NAME"</span><span class="token operator">:</span> <span class="token string">"MyPackage"</span><span class="token punctuation">,</span>
+        <span class="token string-property property">"ELEMENTS"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+          <span class="token string-property property">"SW-COMPONENT-PROTOTYPE"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+            <span class="token string-property property">"SHORT-NAME"</span><span class="token operator">:</span> <span class="token string">"MyComponent"</span>
+            <span class="token comment">// ... other component details</span>
+          <span class="token punctuation">}</span>
+          <span class="token comment">// ... potentially more elements</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span>
+      <span class="token comment">// ... potentially more packages</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+    <p>Notice how the XML structure (tags within tags) translates into nested objects in JSON. This structured format is
+      much easier for JavaScript to navigate and understand than raw XML text.</p>
+    <h2 id="using-the-stored-data">Using the Stored Data </h2>
+    <p>Once <code>parsedData1</code> (and potentially <code>parsedData2</code>) holds this JSON data, it becomes the
+      single source of truth for several frontend operations:</p>
+    <ol>
+      <li>
+        <p><strong>Building the Tree View:</strong> The code responsible for drawing the interactive tree you see on the
+          screen reads directly from <code>parsedData1</code> (and <code>parsedData2</code> if comparing). It walks
+          through the nested structure and creates the visual elements (folders, files, items). We'll explore this in
+          detail in the <a href="04_dynamic_tree_view_rendering_.html">Dynamic Tree View Rendering</a> chapter.</p>
+      </li>
+      <li>
+        <p><strong>Performing Comparisons:</strong> When you load two files, the comparison logic doesn't need to talk
+          to the backend again. It directly accesses the data held in <code>parsedData1</code> and
+          <code>parsedData2</code> right there in the browser's memory and figures out the differences. This makes the
+          comparison process much faster. We'll cover this in the <a
+            href="05_client_side_comparison_logic_.html">Client-Side Comparison Logic</a> chapter.</p>
+      </li>
+    </ol>
+    <h2 id="how-it-works-storing-the-received-data">How It Works: Storing the Received Data </h2>
+    <p>Let's trace how the JSON data gets stored after being received from the backend.</p>
+    <ol>
+      <li><strong>Processing Triggered:</strong> You click "Process". The <code>processFiles</code> function in
+        <code>script.js</code> runs.</li>
+      <li><strong>Backend Call:</strong> <code>processFiles</code> calls <code>sendFileForParsing</code>, which sends
+        the file to the <code>/convert</code> endpoint (as seen in Chapter 2).</li>
+      <li><strong>Backend Response:</strong> The backend processes the file and sends back the JSON data.</li>
+      <li><strong>Data Received:</strong> The <code>sendFileForParsing</code> function receives this JSON response.</li>
+      <li><strong>Storing in State:</strong> The <code>processFiles</code> function takes the returned JSON data and
+        assigns it to the appropriate state variable.</li>
+    </ol>
+    <pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token comment">// File: compare/static/js/script.js (Inside processFiles function - Simplified)</span>
+
+<span class="token keyword keyword-async">async</span> <span class="token keyword keyword-function">function</span> <span class="token function">processFiles</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// ... (setup, show loading) ...</span>
+    <span class="token keyword control-flow keyword-try">try</span> <span class="token punctuation">{</span>
+        <span class="token comment">// --- Call File Processing (Chapter 2) ---</span>
+        <span class="token keyword keyword-const">const</span> receivedJson <span class="token operator">=</span> <span class="token keyword control-flow keyword-await">await</span> <span class="token function">sendFileForParsing</span><span class="token punctuation">(</span>file1Data<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token comment">// --- Store the received JSON data ---</span>
+        parsedData1 <span class="token operator">=</span> receivedJson<span class="token punctuation">;</span> <span class="token comment">// &lt;--- HERE! Storing the data</span>
+        <span class="token comment">// Check for errors returned by the backend</span>
+        <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span>parsedData1<span class="token punctuation">.</span><span class="token property-access">error</span><span class="token punctuation">)</span> <span class="token keyword control-flow keyword-throw">throw</span> <span class="token keyword keyword-new">new</span> <span class="token class-name">Error</span><span class="token punctuation">(</span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">File 1 Error: ...</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span>isCompareMode<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword keyword-const">const</span> receivedJson2 <span class="token operator">=</span> <span class="token keyword control-flow keyword-await">await</span> <span class="token function">sendFileForParsing</span><span class="token punctuation">(</span>file2Data<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            parsedData2 <span class="token operator">=</span> receivedJson2<span class="token punctuation">;</span> <span class="token comment">// &lt;--- HERE! Storing data for file 2</span>
+            <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span>parsedData2<span class="token punctuation">.</span><span class="token property-access">error</span><span class="token punctuation">)</span> <span class="token keyword control-flow keyword-throw">throw</span> <span class="token keyword keyword-new">new</span> <span class="token class-name">Error</span><span class="token punctuation">(</span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">File 2 Error: ...</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token comment">// ... (call comparison logic - Chapter 5) ...</span>
+        <span class="token punctuation">}</span>
+        <span class="token comment">// ... (call UI update/tree building - Chapter 4) ...</span>
+
+    <span class="token punctuation">}</span> <span class="token keyword control-flow keyword-catch">catch</span> <span class="token punctuation">(</span>error<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment">// ... (handle errors) ...</span>
+        parsedData1 <span class="token operator">=</span> <span class="token keyword null nil keyword-null">null</span><span class="token punctuation">;</span> <span class="token comment">// Clear data on error</span>
+        parsedData2 <span class="token operator">=</span> <span class="token keyword null nil keyword-null">null</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span> <span class="token keyword control-flow keyword-finally">finally</span> <span class="token punctuation">{</span>
+        <span class="token comment">// ... (hide loading) ...</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+    <p>The lines <code>parsedData1 = receivedJson;</code> and <code>parsedData2 = receivedJson2;</code> are the key
+      moments where the JSON blueprints received from the backend are placed onto the "engineer's desk" (stored in the
+      browser's memory).</p>
+    <h2 id="the-flow-from-backend-to-browser-memory">The Flow: From Backend to Browser Memory </h2>
+    <p>Here's a simple diagram illustrating where this step fits:</p>
+    <div class="mermaid">sequenceDiagram
+      participant FE as Frontend JS (script.js)
+      participant BE as Backend (/convert)
+      participant State as Browser Memory (parsedData1/2)
+      participant Tree as Tree Rendering (Ch 4)
+      participant Diff as Comparison Logic (Ch 5)
+
+      FE-&gt;&gt;BE: Send File (via fetch)
+      BE--&gt;&gt;FE: Return Parsed JSON Data
+      FE-&gt;&gt;State: parsedData1 = Received JSON
+      alt Compare Mode
+      FE-&gt;&gt;BE: Send File 2
+      BE--&gt;&gt;FE: Return Parsed JSON Data 2
+      FE-&gt;&gt;State: parsedData2 = Received JSON 2
+      end
+      State--&gt;&gt;Tree: Provide parsedData1 (and parsedData2 if needed)
+      State--&gt;&gt;Diff: Provide parsedData1 AND parsedData2
+    </div>
+    <p>This shows the JSON coming back from the Backend (<code>BE</code>) and being stored by the Frontend JavaScript
+      (<code>FE</code>) into the Browser Memory (<code>State</code>). This stored data is then used by the Tree
+      Rendering and Comparison Logic components.</p>
+    <h2 id="conclusion">Conclusion </h2>
+    <p>Frontend Data Representation in ARXplore is about efficiently storing the structured JSON data (received after
+      backend processing) in the browser's memory using JavaScript variables like <code>parsedData1</code> and
+      <code>parsedData2</code>.</p>
+    <p>Think of it as keeping a readily accessible working copy of the project blueprints on your desk. This allows the
+      application to quickly build the visual tree view and perform comparisons directly within the browser, minimizing
+      delays and reducing the need to constantly ask the backend for the same information.</p>
+    <p>Now that we have this structured data stored and ready, how does ARXplore actually use it to create the
+      interactive tree view you see on the screen? Let's find out in the next chapter!</p>
+    <p>Next: <a href="04_dynamic_tree_view_rendering_.html">Dynamic Tree View Rendering</a></p>
+    <hr>
+   
+
+  </div>
+
+
+
+
+  <script type="module">
+    // TODO: If ZenUML gets integrated into mermaid in the future,
+    //      we can remove the following lines.
+
+
+    var MERMAID_CONFIG = ({ "startOnLoad": false });
+    if (typeof MERMAID_CONFIG !== 'undefined') {
+      MERMAID_CONFIG.startOnLoad = false
+      MERMAID_CONFIG.cloneCssStyles = false
+      MERMAID_CONFIG.theme = "default"
+    }
+
+    mermaid.initialize(MERMAID_CONFIG || {})
+    if (typeof (window['Reveal']) !== 'undefined') {
+      function mermaidRevealHelper(event) {
+        var currentSlide = event.currentSlide
+        var diagrams = currentSlide.querySelectorAll('.mermaid')
+        for (var i = 0; i < diagrams.length; i++) {
+          var diagram = diagrams[i]
+          if (!diagram.hasAttribute('data-processed')) {
+            mermaid.init(null, diagram, () => {
+              Reveal.slide(event.indexh, event.indexv)
+            })
+          }
+        }
+      }
+      Reveal.addEventListener('slidetransitionend', mermaidRevealHelper)
+      Reveal.addEventListener('ready', mermaidRevealHelper)
+      await mermaid.run({
+        nodes: document.querySelectorAll('.mermaid')
+      })
+    } else {
+      await mermaid.run({
+        nodes: document.querySelectorAll('.mermaid')
+      })
+    }
+  </script>
+
+
+
+
+</body>
+
+</html>

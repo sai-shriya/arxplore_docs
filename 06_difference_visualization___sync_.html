@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>06_difference_visualization___sync_</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="katex.min.css">
+
+
+  <script type="text/javascript" src="mermaid.min.js" charset="UTF-8"></script>
+
+
+  <link rel="stylesheet" href="style.css">
+
+
+  <script type="text/javascript" src="sidebar.js"></script>
+
+
+  </script>
+</head>
+
+     
+<body  for="html-export" >
+
+
+  <div class="crossnote markdown-preview  ">
+
+    <h1 id="chapter-6-difference-visualization--sync">Chapter 6: Difference Visualization &amp; Sync </h1>
+    <p>Welcome back! In the <a href="05_client_side_comparison_logic_.html">previous chapter</a>, we learned how
+      ARXplore acts like an internal auditor, meticulously comparing the two JSON structures (<code>parsedData1</code>
+      and <code>parsedData2</code>) you provided. This comparison results in a detailed logbook called
+      <code>currentDiffMap</code>, which lists every single addition, deletion, and modification found between the two
+      files.</p>
+    <p>But having a logbook isn't enough! Imagine the auditor just handed you a list of page numbers and line items that
+      changed in two huge accounting ledgers. It would still be hard work to flip back and forth and actually
+      <em>see</em> the changes in context. You'd want the auditor to take out highlighters and mark the changed lines
+      directly on the ledger pages, and maybe insert labeled slips of paper where entire pages were added or removed,
+      keeping the corresponding pages aligned.</p>
+    <p>That's exactly what <strong>Difference Visualization &amp; Sync</strong> does in ARXplore. It takes the findings
+      from the <code>currentDiffMap</code> and applies visual markings directly to the tree views, making it instantly
+      clear where the changes occurred. It also ensures that when you scroll through one file's tree, the other tree
+      scrolls along with it, keeping related items perfectly lined up.</p>
+    <h2 id="key-concepts">Key Concepts </h2>
+    <p>This process involves three main ideas:</p>
+    <ol>
+      <li><strong>Highlighting Changes:</strong> Just like using a highlighter, the tool changes the appearance
+        (background color, border) of nodes in the tree that have been modified. This makes them stand out.</li>
+      <li><strong>Placeholder Insertion:</strong> When an item (like an <code>AR-PACKAGE</code> or a specific setting)
+        is added in one file or deleted from the other, simply highlighting isn't enough – it would mess up the
+        alignment between the two trees. Instead, the tool inserts a special "placeholder" block (like a blank, labeled
+        slip of paper) in the <em>opposite</em> tree where the change occurred. This block (<code>empty-space</code>)
+        visually indicates "something was added here in the other file" or "something was deleted from here in the other
+        file", crucially keeping the elements <em>above</em> and <em>below</em> the change aligned across both trees.
+      </li>
+      <li><strong>Scroll Synchronization:</strong> To make comparing easier, especially with long files, the tool links
+        the scroll bars of the two tree view panels. When you scroll down in the left panel, the right panel
+        automatically scrolls down by the same amount, and vice-versa. This ensures that corresponding parts of the
+        files stay visually side-by-side.</li>
+    </ol>
+    <h2 id="how-it-works-applying-the-markings">How It Works: Applying the Markings </h2>
+    <p>Remember how the tree views are built in <a href="04_dynamic_tree_view_rendering_.html">Dynamic Tree View
+        Rendering</a>? The <code>buildTreeView</code> function calls <code>createTreeNode</code> (or similar helpers)
+      for each element in the JSON data.</p>
+    <p>To visualize differences, this process is enhanced:</p>
+    <ol>
+      <li><strong>Check the Logbook:</strong> As each node's HTML is being created by <code>createTreeNode</code>, it
+        looks up the node's unique path (e.g., <code>AUTOSAR/AR-PACKAGES/AR-PACKAGE[0]/SHORT-NAME</code>) in the
+        <code>currentDiffMap</code>.</li>
+      <li><strong>Apply Styles (Highlighting):</strong> If the <code>currentDiffMap</code> entry for that path shows a
+        <code>type: 'modified'</code>, the function adds a specific CSS class (like <code>modified</code>) to the HTML
+        element for that node.</li>
+      <li><strong>Insert Placeholders:</strong> If the <code>currentDiffMap</code> shows <code>type: 'added'</code> or
+        <code>type: 'deleted'</code>, the logic gets smarter.
+        <ul>
+          <li>If an item was <em>added</em> (exists in file 2, not file 1), when building the tree for file 1 (the
+            <code>left</code> side), instead of trying to create the node, it creates a placeholder
+            (<code>empty-space</code> with an <code>added-space</code> style) indicating something is missing compared
+            to the right side. The actual node is built normally in file 2's tree.</li>
+          <li>If an item was <em>deleted</em> (exists in file 1, not file 2), when building the tree for file 2 (the
+            <code>right</code> side), it creates a placeholder (<code>empty-space</code> with a
+            <code>deleted-space</code> style). The actual node is built normally in file 1's tree.</li>
+        </ul>
+      </li>
+      <li><strong>Sync Scrolls:</strong> After both trees are initially rendered, a function
+        <code>setupScrollSync</code> is called to attach event listeners that trigger the synchronized scrolling
+        behavior.</li>
+    </ol>
+    <h2 id="diving-into-the-code-simplified-examples">Diving into the Code (Simplified Examples) </h2>
+    <p>Let's see how these concepts translate into code.</p>
+    <p><strong>1. Checking the <code>currentDiffMap</code> During Node Creation</strong></p>
+    <p>Inside the <code>createTreeNode</code> function (or a similar helper), there's logic that consults the
+      <code>currentDiffMap</code>.</p>
+    <pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token comment">// File: compare/static/js/script.js (Simplified within createTreeNode)</span>
+
+<span class="token keyword keyword-function">function</span> <span class="token function">createTreeNode</span><span class="token punctuation">(</span><span class="token parameter">key<span class="token punctuation">,</span> data<span class="token punctuation">,</span> nodeId<span class="token punctuation">,</span> path<span class="token punctuation">,</span> diffMap<span class="token punctuation">,</span> side<span class="token punctuation">,</span> depth</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword keyword-const">const</span> nodeContainer <span class="token operator">=</span> <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token method function property-access">createElement</span><span class="token punctuation">(</span><span class="token string">'div'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    nodeContainer<span class="token punctuation">.</span><span class="token property-access">className</span> <span class="token operator">=</span> <span class="token string">'tree-node-container'</span><span class="token punctuation">;</span>
+    <span class="token comment">// ... (other setup: dataset.path, dataset.side) ...</span>
+
+    <span class="token keyword keyword-const">const</span> pathString <span class="token operator">=</span> path<span class="token punctuation">.</span><span class="token method function property-access">join</span><span class="token punctuation">(</span><span class="token string">'/'</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// e.g., "AUTOSAR/PACKAGES/PKG1"</span>
+    <span class="token keyword keyword-const">const</span> diffInfo <span class="token operator">=</span> diffMap<span class="token punctuation">.</span><span class="token method function property-access">get</span><span class="token punctuation">(</span>pathString<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// Look up in the "logbook"</span>
+
+    <span class="token comment">// --- Difference Handling ---</span>
+    <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span>isCompareMode <span class="token operator">&amp;&amp;</span> diffInfo<span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token comment">// Only apply if comparing and difference exists</span>
+
+        <span class="token comment">// If ADDED in the *other* file, create placeholder on *this* side</span>
+        <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span>diffInfo<span class="token punctuation">.</span><span class="token property-access">type</span> <span class="token operator">===</span> <span class="token string">'added'</span> <span class="token operator">&amp;&amp;</span> side <span class="token operator">===</span> <span class="token string">'left'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword control-flow keyword-return">return</span> <span class="token function">createPlaceholderSpace</span><span class="token punctuation">(</span>key<span class="token punctuation">,</span> <span class="token string">'deleted'</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// Placeholder on Left for item added on Right</span>
+        <span class="token punctuation">}</span>
+        <span class="token comment">// If DELETED from the *other* file, create placeholder on *this* side</span>
+        <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span>diffInfo<span class="token punctuation">.</span><span class="token property-access">type</span> <span class="token operator">===</span> <span class="token string">'deleted'</span> <span class="token operator">&amp;&amp;</span> side <span class="token operator">===</span> <span class="token string">'right'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword control-flow keyword-return">return</span> <span class="token function">createPlaceholderSpace</span><span class="token punctuation">(</span>key<span class="token punctuation">,</span> <span class="token string">'deleted'</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// Placeholder on Right for item deleted from Left</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment">// If MODIFIED, add the 'modified' class to the container</span>
+        <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span>diffInfo<span class="token punctuation">.</span><span class="token property-access">type</span> <span class="token operator">===</span> <span class="token string">'modified'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            nodeContainer<span class="token punctuation">.</span><span class="token property-access">classList</span><span class="token punctuation">.</span><span class="token method function property-access">add</span><span class="token punctuation">(</span><span class="token string">'modified'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token comment">// If ADDED, mark the actual node (built on the 'right' side)</span>
+        <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span>diffInfo<span class="token punctuation">.</span><span class="token property-access">type</span> <span class="token operator">===</span> <span class="token string">'deleted'</span> <span class="token operator">&amp;&amp;</span> side <span class="token operator">===</span> <span class="token string">'right'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+             nodeContainer<span class="token punctuation">.</span><span class="token property-access">classList</span><span class="token punctuation">.</span><span class="token method function property-access">add</span><span class="token punctuation">(</span><span class="token string">'deleted'</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// Class for potential filtering</span>
+        <span class="token punctuation">}</span>
+        <span class="token comment">// If DELETED, mark the actual node (built on the 'left' side)</span>
+        <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span>diffInfo<span class="token punctuation">.</span><span class="token property-access">type</span> <span class="token operator">===</span> <span class="token string">'deleted'</span> <span class="token operator">&amp;&amp;</span> side <span class="token operator">===</span> <span class="token string">'left'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            nodeContainer<span class="token punctuation">.</span><span class="token property-access">classList</span><span class="token punctuation">.</span><span class="token method function property-access">add</span><span class="token punctuation">(</span><span class="token string">'deleted'</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// Class for potential filtering</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment">// --- Build the actual node header and children container ---</span>
+    <span class="token keyword keyword-const">const</span> nodeHeader <span class="token operator">=</span> <span class="token function">createNodeHeader</span><span class="token punctuation">(</span>key<span class="token punctuation">,</span> data<span class="token punctuation">,</span> nodeId<span class="token punctuation">,</span> path<span class="token punctuation">,</span> diffMap<span class="token punctuation">,</span> side<span class="token punctuation">,</span> depth<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    nodeContainer<span class="token punctuation">.</span><span class="token method function property-access">appendChild</span><span class="token punctuation">(</span>nodeHeader<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">// ... (create children container if needed) ...</span>
+
+    <span class="token keyword control-flow keyword-return">return</span> nodeContainer<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+    <p>This snippet shows the core logic: it gets <code>diffInfo</code> using the node's <code>pathString</code>. Based
+      on the <code>diffInfo.type</code> and which <code>side</code> (left/right tree) it's currently building, it either
+      adds a CSS class (<code>modified</code>, <code>added</code>, <code>deleted</code>) or calls
+      <code>createPlaceholderSpace</code>.</p>
+    <p><strong>2. Creating Placeholder Blocks</strong></p>
+    <p>The <code>createPlaceholderSpace</code> function generates the HTML for those alignment blocks.</p>
+    <pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token comment">// File: compare/static/js/script.js (Simplified)</span>
+
+<span class="token keyword keyword-function">function</span> <span class="token function">createPlaceholderSpace</span><span class="token punctuation">(</span><span class="token parameter">key<span class="token punctuation">,</span> type</span><span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token comment">// type is 'added' or 'deleted'</span>
+    <span class="token keyword keyword-const">const</span> emptySpace <span class="token operator">=</span> <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token method function property-access">createElement</span><span class="token punctuation">(</span><span class="token string">'div'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">// Add CSS classes for styling based on type</span>
+    emptySpace<span class="token punctuation">.</span><span class="token property-access">className</span> <span class="token operator">=</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">empty-space </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>type<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">-space</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">;</span>
+
+    <span class="token comment">// Add a label inside showing what was added/deleted</span>
+    <span class="token keyword keyword-const">const</span> label <span class="token operator">=</span> <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token method function property-access">createElement</span><span class="token punctuation">(</span><span class="token string">'span'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    label<span class="token punctuation">.</span><span class="token property-access">className</span> <span class="token operator">=</span> <span class="token string">'empty-space-label'</span><span class="token punctuation">;</span>
+    <span class="token keyword keyword-const">const</span> iconClass <span class="token operator">=</span> type <span class="token operator">===</span> <span class="token string">'added'</span> <span class="token operator">?</span> <span class="token string">'fa-plus-circle'</span> <span class="token operator">:</span> <span class="token string">'fa-minus-circle'</span><span class="token punctuation">;</span> <span class="token comment">// Choose icon</span>
+    label<span class="token punctuation">.</span><span class="token property-access">innerHTML</span> <span class="token operator">=</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token html language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>i</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>fas <span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>iconClass<span class="token interpolation-punctuation punctuation">}</span></span><span class="token punctuation">"</span></span><span class="token punctuation">&gt;</span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>i</span><span class="token punctuation">&gt;</span></span> <span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>key<span class="token interpolation-punctuation punctuation">}</span></span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">;</span> <span class="token comment">// Show icon and name</span>
+    label<span class="token punctuation">.</span><span class="token property-access">title</span> <span class="token operator">=</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>key<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> (</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>type <span class="token operator">===</span> <span class="token string">'added'</span> <span class="token operator">?</span> <span class="token string">'Present in other file'</span> <span class="token operator">:</span> <span class="token string">'Missing in other file'</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">)</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">;</span>
+    emptySpace<span class="token punctuation">.</span><span class="token method function property-access">appendChild</span><span class="token punctuation">(</span>label<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment">// Add data attributes for filtering/debugging</span>
+    emptySpace<span class="token punctuation">.</span><span class="token property-access">dataset</span><span class="token punctuation">.</span><span class="token property-access">key</span> <span class="token operator">=</span> key<span class="token punctuation">;</span>
+    emptySpace<span class="token punctuation">.</span><span class="token property-access">dataset</span><span class="token punctuation">.</span><span class="token property-access">diffType</span> <span class="token operator">=</span> type<span class="token punctuation">;</span>
+
+    <span class="token keyword control-flow keyword-return">return</span> emptySpace<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+    <p>This function creates a <code>div</code> with specific classes (<code>empty-space</code>,
+      <code>added-space</code> or <code>deleted-space</code>) and puts a descriptive label inside.</p>
+    <p><strong>3. Styling the Differences with CSS</strong></p>
+    <p>The visual appearance (colors, borders) comes from CSS rules that target the classes added by the JavaScript.</p>
+    <pre data-role="codeBlock" data-info="css" class="language-css css"><code><span class="token comment">/* File: compare/static/css/style.css (Simplified) */</span>
+
+<span class="token comment">/* Modified node highlighting */</span>
+<span class="token selector"><span class="token class">.tree-node-container</span><span class="token class">.modified</span> <span class="token combinator">&gt;</span> <span class="token class">.tree-node-header</span></span> <span class="token punctuation">{</span>
+    <span class="token property">background-color</span><span class="token punctuation">:</span> <span class="token function">var</span><span class="token punctuation">(</span><span class="token variable">--modified-bg</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">/* Light yellow background */</span>
+    <span class="token property">border-left</span><span class="token punctuation">:</span> <span class="token number">3</span><span class="token unit">px</span> solid <span class="token function">var</span><span class="token punctuation">(</span><span class="token variable">--modified-border</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">/* Yellow left border */</span>
+    <span class="token comment">/* ... other styles ... */</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">/* Placeholder base style */</span>
+<span class="token selector"><span class="token class">.empty-space</span></span> <span class="token punctuation">{</span>
+    <span class="token property">min-height</span><span class="token punctuation">:</span> <span class="token number">27</span><span class="token unit">px</span><span class="token punctuation">;</span> <span class="token comment">/* Approx height of a regular node */</span>
+    <span class="token property">display</span><span class="token punctuation">:</span> flex<span class="token punctuation">;</span>
+    <span class="token property">align-items</span><span class="token punctuation">:</span> center<span class="token punctuation">;</span>
+    <span class="token property">padding-left</span><span class="token punctuation">:</span> <span class="token number">20</span><span class="token unit">px</span><span class="token punctuation">;</span> <span class="token comment">/* Align with regular nodes */</span>
+    <span class="token property">border-left</span><span class="token punctuation">:</span> <span class="token number">3</span><span class="token unit">px</span> solid <span class="token color">transparent</span><span class="token punctuation">;</span> <span class="token comment">/* Base border */</span>
+    <span class="token comment">/* ... other styles ... */</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">/* Placeholder for items ADDED in the other file */</span>
+<span class="token selector"><span class="token class">.empty-space</span><span class="token class">.added-space</span></span> <span class="token punctuation">{</span>
+    <span class="token property">background-color</span><span class="token punctuation">:</span> <span class="token function">var</span><span class="token punctuation">(</span><span class="token variable">--added-bg</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">/* Light green background */</span>
+    <span class="token property">border-left-color</span><span class="token punctuation">:</span> <span class="token function">var</span><span class="token punctuation">(</span><span class="token variable">--added-border</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">/* Green left border */</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">/* Placeholder for items DELETED from the other file */</span>
+<span class="token selector"><span class="token class">.empty-space</span><span class="token class">.deleted-space</span></span> <span class="token punctuation">{</span>
+    <span class="token property">background-color</span><span class="token punctuation">:</span> <span class="token function">var</span><span class="token punctuation">(</span><span class="token variable">--deleted-bg</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">/* Light red background */</span>
+    <span class="token property">border-left-color</span><span class="token punctuation">:</span> <span class="token function">var</span><span class="token punctuation">(</span><span class="token variable">--deleted-border</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">/* Red left border */</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">/* Label inside placeholder */</span>
+<span class="token selector"><span class="token class">.empty-space-label</span></span> <span class="token punctuation">{</span>
+    <span class="token property">font-style</span><span class="token punctuation">:</span> italic<span class="token punctuation">;</span>
+    <span class="token property">font-size</span><span class="token punctuation">:</span> <span class="token number">0.9</span><span class="token unit">em</span><span class="token punctuation">;</span>
+    <span class="token property">color</span><span class="token punctuation">:</span> <span class="token hexcode color">#555</span><span class="token punctuation">;</span>
+    <span class="token comment">/* ... other styles ... */</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector"><span class="token class">.empty-space-label</span> i</span> <span class="token punctuation">{</span> <span class="token comment">/* Icon style */</span>
+    <span class="token property">margin-right</span><span class="token punctuation">:</span> <span class="token number">5</span><span class="token unit">px</span><span class="token punctuation">;</span>
+    <span class="token property">opacity</span><span class="token punctuation">:</span> <span class="token number">0.8</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+    <p>These CSS rules define how elements with the <code>.modified</code>, <code>.added-space</code>, and
+      <code>.deleted-space</code> classes actually look, applying the background colors and borders like highlighters
+      and colored slips.</p>
+    <p><strong>4. Synchronizing Scrolling</strong></p>
+    <p>After the trees are built (in <code>updateUI</code>), <code>setupScrollSync</code> is called.</p>
+    <pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token comment">// File: compare/static/js/script.js (Simplified)</span>
+
+<span class="token keyword keyword-let">let</span> isSyncing <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span> <span class="token comment">// Flag to prevent scroll event loops</span>
+
+<span class="token keyword keyword-function">function</span> <span class="token function">setupScrollSync</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// Attach event listeners to both tree containers</span>
+    file1TreeContainer<span class="token punctuation">.</span><span class="token method-variable function-variable method function property-access">onscroll</span> <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=&gt;</span> <span class="token function">syncScroll</span><span class="token punctuation">(</span>file1TreeContainer<span class="token punctuation">,</span> file2TreeContainer<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    file2TreeContainer<span class="token punctuation">.</span><span class="token method-variable function-variable method function property-access">onscroll</span> <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=&gt;</span> <span class="token function">syncScroll</span><span class="token punctuation">(</span>file2TreeContainer<span class="token punctuation">,</span> file1TreeContainer<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword keyword-function">function</span> <span class="token function">syncScroll</span><span class="token punctuation">(</span><span class="token parameter">source<span class="token punctuation">,</span> target</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// If we are already in the process of syncing, ignore this event</span>
+    <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span>isSyncing<span class="token punctuation">)</span> <span class="token keyword control-flow keyword-return">return</span><span class="token punctuation">;</span>
+
+    <span class="token comment">// Set the flag to indicate syncing is in progress</span>
+    isSyncing <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+
+    <span class="token comment">// Set the target's scroll position to match the source's</span>
+    target<span class="token punctuation">.</span><span class="token property-access">scrollTop</span> <span class="token operator">=</span> source<span class="token punctuation">.</span><span class="token property-access">scrollTop</span><span class="token punctuation">;</span> <span class="token comment">// Vertical sync</span>
+    target<span class="token punctuation">.</span><span class="token property-access">scrollLeft</span> <span class="token operator">=</span> source<span class="token punctuation">.</span><span class="token property-access">scrollLeft</span><span class="token punctuation">;</span> <span class="token comment">// Horizontal sync</span>
+
+    <span class="token comment">// Reset the flag AFTER the browser has had a chance to process the scroll</span>
+    <span class="token comment">// requestAnimationFrame ensures we don't reset too quickly</span>
+    <span class="token function">requestAnimationFrame</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=&gt;</span> <span class="token punctuation">{</span>
+        isSyncing <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+    <p>This code listens for scroll events on both panels. When one scrolls (<code>source</code>), it updates the scroll
+      position (<code>scrollTop</code> and <code>scrollLeft</code>) of the other panel (<code>target</code>). The
+      <code>isSyncing</code> flag is crucial to prevent an infinite loop where syncing one panel triggers a scroll
+      event, which tries to sync the first panel back, and so on.</p>
+    <h2 id="the-visualization-flow">The Visualization Flow </h2>
+    <p>Here’s a diagram showing how the difference map influences tree rendering:</p>
+    <div class="mermaid">sequenceDiagram
+      participant UI as updateUI (script.js)
+      participant BTV as buildTreeView
+      participant CTN as createTreeNode
+      participant DiffMap as currentDiffMap
+      participant CSS as CSS Styles (style.css)
+      participant Sync as setupScrollSync
+
+      UI-&gt;&gt;BTV: Build tree for File 1 (Left) using parsedData1 &amp; currentDiffMap
+      BTV-&gt;&gt;CTN: Create node for Path 'A/B' (Left)
+      CTN-&gt;&gt;DiffMap: Check path 'A/B'
+      DiffMap--&gt;&gt;CTN: Info: {type: 'modified'}
+      CTN-&gt;&gt;CTN: Add '.modified' class to node HTML
+      Note right of CTN: Node gets yellow background via CSS
+      BTV-&gt;&gt;CTN: Create node for Path 'A/C' (Left)
+      CTN-&gt;&gt;DiffMap: Check path 'A/C'
+      DiffMap--&gt;&gt;CTN: Info: {type: 'added'}
+      CTN-&gt;&gt;CTN: Create Placeholder HTML (Deleted style on Left)
+      BTV--&gt;&gt;UI: File 1 Tree Rendered with Highlights/Placeholders
+      UI-&gt;&gt;BTV: Build tree for File 2 (Right) using parsedData2 &amp; currentDiffMap
+      BTV-&gt;&gt;CTN: Create node for Path 'A/B' (Right)
+      CTN-&gt;&gt;DiffMap: Check path 'A/B'
+      DiffMap--&gt;&gt;CTN: Info: {type: 'modified'}
+      CTN-&gt;&gt;CTN: Add '.modified' class to node HTML
+      BTV-&gt;&gt;CTN: Create node for Path 'A/C' (Right)
+      CTN-&gt;&gt;DiffMap: Check path 'A/C'
+      DiffMap--&gt;&gt;CTN: Info: {type: 'added'}
+      CTN-&gt;&gt;CTN: Create Node HTML (with '.added' class)
+      BTV--&gt;&gt;UI: File 2 Tree Rendered with Highlights/Placeholders
+      UI-&gt;&gt;Sync: setupScrollSync()
+    </div>
+    <p>This diagram illustrates how <code>buildTreeView</code> uses <code>createTreeNode</code>, which checks the
+      <code>currentDiffMap</code> for each node's path. Depending on the difference type and the side being built, it
+      either adds CSS classes (leading to visual changes via <code>CSS Styles</code>) or creates placeholders to
+      maintain alignment. Finally, <code>setupScrollSync</code> links the scrolling of the two finished trees.</p>
+    <h2 id="conclusion">Conclusion </h2>
+    <p>Difference Visualization &amp; Sync bridges the gap between knowing <em>that</em> differences exist (from the
+      <code>currentDiffMap</code>) and <em>seeing</em> where they are. By applying CSS classes for highlighting modified
+      nodes and intelligently inserting placeholder blocks for added/deleted items, ARXplore makes the changes visually
+      obvious directly within the tree views. The synchronized scrolling ensures that you can easily track corresponding
+      elements across both files as you navigate. It's like having the auditor perfectly mark up both ledgers and clip
+      them together so they stay aligned as you review the changes.</p>
+    <p>Now that we can clearly see the differences, wouldn't it be great if we could get an automated summary or
+      analysis of <em>what</em> those changes mean? In the next chapter, we'll explore how ARXplore leverages AI to
+      provide insights into the detected differences.</p>
+    <p>Next: <a href="07_ai_difference_analysis_.html">AI Difference Analysis</a></p>
+    <hr>
+   
+
+  </div>
+
+
+
+
+  <script type="module">
+    // TODO: If ZenUML gets integrated into mermaid in the future,
+    //      we can remove the following lines.
+
+
+    var MERMAID_CONFIG = ({ "startOnLoad": false });
+    if (typeof MERMAID_CONFIG !== 'undefined') {
+      MERMAID_CONFIG.startOnLoad = false
+      MERMAID_CONFIG.cloneCssStyles = false
+      MERMAID_CONFIG.theme = "default"
+    }
+
+    mermaid.initialize(MERMAID_CONFIG || {})
+    if (typeof (window['Reveal']) !== 'undefined') {
+      function mermaidRevealHelper(event) {
+        var currentSlide = event.currentSlide
+        var diagrams = currentSlide.querySelectorAll('.mermaid')
+        for (var i = 0; i < diagrams.length; i++) {
+          var diagram = diagrams[i]
+          if (!diagram.hasAttribute('data-processed')) {
+            mermaid.init(null, diagram, () => {
+              Reveal.slide(event.indexh, event.indexv)
+            })
+          }
+        }
+      }
+      Reveal.addEventListener('slidetransitionend', mermaidRevealHelper)
+      Reveal.addEventListener('ready', mermaidRevealHelper)
+      await mermaid.run({
+        nodes: document.querySelectorAll('.mermaid')
+      })
+    } else {
+      await mermaid.run({
+        nodes: document.querySelectorAll('.mermaid')
+      })
+    }
+  </script>
+
+
+
+
+</body>
+
+</html>

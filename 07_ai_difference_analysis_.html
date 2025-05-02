@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>07_ai_difference_analysis_</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="katex.min.css">
+    <link rel="stylesheet" href="all.min.css">
+
+    <script type="text/javascript" src="mermaid.min.js" charset="UTF-8"></script>
+
+    <link rel="stylesheet" href="style.css">
+
+    <script type="text/javascript" src="sidebar.js"></script>
+
+
+    </script>
+</head>
+
+     
+<body  for="html-export" >
+
+
+    <div class="crossnote markdown-preview  ">
+
+        <h1 id="chapter-7-ai-difference-analysis">Chapter 7: AI Difference Analysis </h1>
+        <p>Welcome back! In the <a href="06_difference_visualization___sync_.html">previous chapter</a>, we saw how
+            ARXplore uses highlighting and placeholders to visually pinpoint every difference between two ARXML files
+            directly in the tree views. This is incredibly helpful for seeing exactly <em>where</em> things changed.</p>
+        <p>However, even with clear highlighting, reviewing a large number of changes one by one can still take time.
+            What if you have dozens or even hundreds of modifications, additions, and deletions? You might want a quick
+            overview – an executive summary – of <em>what</em> kinds of changes occurred before diving into the details.
+        </p>
+        <p>This is where <strong>AI Difference Analysis</strong> comes in. It's like taking the detailed list of changes
+            found by our internal auditor (the <a href="05_client_side_comparison_logic_.html">Client-Side Comparison
+                Logic</a>) and handing it over to an expert analyst – in this case, an Artificial Intelligence – to get
+            a concise, human-readable summary of the key findings.</p>
+        <h2 id="the-problem-information-overload">The Problem: Information Overload </h2>
+        <p>Imagine the difference report (<code>currentDiffMap</code>) is a long list of technical line items:</p>
+        <ul>
+            <li>Path <code>A/B/C/SHORT-NAME</code> modified: "OldVal" -&gt; "NewVal"</li>
+            <li>Path <code>A/D/E</code> added.</li>
+            <li>Path <code>X/Y/Z</code> deleted.</li>
+            <li>... (150 more lines) ...</li>
+        </ul>
+        <p>While accurate, understanding the <em>overall impact</em> or the <em>main themes</em> of the changes requires
+            reading and interpreting this whole list.</p>
+        <h2 id="the-solution-an-ai-analyst">The Solution: An AI Analyst </h2>
+        <p>ARXplore uses a clever approach: it leverages an external AI service (specifically, Google's Generative AI,
+            based on the project setup) to analyze the list of differences for you.</p>
+        <p>Here's the process:</p>
+        <ol>
+            <li><strong>Gather the Facts:</strong> After you compare two files, ARXplore has the
+                <code>currentDiffMap</code> containing all the differences.</li>
+            <li><strong>Prepare a Briefing:</strong> The JavaScript in your browser (the frontend) prepares a simplified
+                summary of this map. It extracts the path, type of change (modified, added, deleted), and snippets of
+                the old/new values for each difference.</li>
+            <li><strong>Send to the Analyst:</strong> This briefing is sent to a special backend address
+                (<code>/summarize</code>).</li>
+            <li><strong>AI Consultation:</strong> The backend acts as a middleman. It takes the briefing and securely
+                sends it to the Google Generative AI service, asking it to generate a summary of the changes between the
+                two files based on the provided difference list.</li>
+            <li><strong>Receive the Report:</strong> The AI generates a summary in natural language (like English text,
+                potentially using Markdown for formatting) and sends it back to our backend.</li>
+            <li><strong>Display the Summary:</strong> The backend relays this AI-generated report back to your browser,
+                where ARXplore displays it in a dedicated sidebar panel.</li>
+        </ol>
+        <p>Now, instead of just seeing the highlighted lines, you get a text summary explaining the most significant
+            changes, potential patterns, or types of modifications found.</p>
+        <h2 id="how-to-use-it">How to Use It </h2>
+        <p>Using the AI analysis is straightforward:</p>
+        <ol>
+            <li><strong>Upload &amp; Process:</strong> Load two ARXML files into the drop zones and click the "Process"
+                button.</li>
+            <li><strong>Wait for Comparison:</strong> The tool processes the files and performs the comparison,
+                highlighting differences as described in <a href="06_difference_visualization___sync_.html">Chapter
+                    6</a>.</li>
+            <li><strong>Find the Button:</strong> A button, typically labeled something like "Analyze Diffs" or "Show
+                Differences", becomes active in the control bar above the results. (In <code>ARXplore v1.0</code>, this
+                button is labeled "Show Differences" and has a microscope icon <i class="fas fa-microscope"></i>).
+                <pre data-role="codeBlock" data-info="html" class="language-html html"><code><span class="token comment">&lt;!-- File: compare/templates/index.html (Snippet) --&gt;</span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>button</span> <span class="token attr-name">id</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>analyze-diff-btn<span class="token punctuation">"</span></span> <span class="token attr-name">title</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>Analyze Differences with AI<span class="token punctuation">"</span></span> <span class="token special-attr"><span class="token attr-name">style</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span><span class="token value css language-css"><span class="token property">margin-left</span><span class="token punctuation">:</span> <span class="token number">10</span><span class="token unit">px</span><span class="token punctuation">;</span></span><span class="token punctuation">"</span></span></span> <span class="token attr-name">disabled</span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>i</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>fas fa-microscope<span class="token punctuation">"</span></span><span class="token punctuation">&gt;</span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>i</span><span class="token punctuation">&gt;</span></span> <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>span</span><span class="token punctuation">&gt;</span></span>Show Differences<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>span</span><span class="token punctuation">&gt;</span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>button</span><span class="token punctuation">&gt;</span></span>
+</code></pre>
+            </li>
+            <li><strong>Click to Analyze:</strong> Click this button.</li>
+            <li><strong>Sidebar Opens:</strong> A sidebar slides out from the side of the screen.</li>
+            <li><strong>View Analysis:</strong> Inside the sidebar, you'll initially see a loading indicator (<i
+                    class="fas fa-spinner fa-spin"></i>). Once the AI analysis is complete, the generated summary text
+                will appear. This might take a few seconds depending on the number of differences and the AI service
+                speed.</li>
+        </ol>
+        <p>You can then read the AI's interpretation of the changes alongside the highlighted tree views.</p>
+        <h2 id="under-the-hood-the-communication-flow">Under the Hood: The Communication Flow </h2>
+        <p>Let's trace the journey from clicking the button to seeing the summary:</p>
+        <ol>
+            <li><strong>User Action:</strong> You click the "Analyze Diffs" / "Show Differences" button.</li>
+            <li><strong>Frontend Preparation:</strong> The <code>script.js</code> code attached to the button's click
+                event gathers the filenames and prepares a simplified list (<code>diffArray</code>) from the
+                <code>currentDiffMap</code>. It truncates long values to keep the data sent manageable.</li>
+            <li><strong>Frontend Sends:</strong> The browser uses the <code>fetch</code> API to send this
+                <code>diffArray</code> and the filenames to the backend endpoint <code>/summarize</code> using a
+                <code>POST</code> request.</li>
+            <li><strong>Backend Receives:</strong> The Flask server (<code>app.py</code>) running on the backend
+                receives the request at the <code>/summarize</code> route.</li>
+            <li><strong>Backend -&gt; AI:</strong> The Python code extracts the filenames and difference data. It then
+                formats a request (a "prompt") containing this information and sends it to the Google Generative AI API.
+                (This step requires appropriate API keys configured on the backend).</li>
+            <li><strong>AI Processes:</strong> Google's AI analyzes the prompt and the difference data.</li>
+            <li><strong>AI -&gt; Backend:</strong> The AI service sends back the generated summary text.</li>
+            <li><strong>Backend Sends Back:</strong> The Flask server receives the summary and packages it into a JSON
+                response, sending it back to the browser.</li>
+            <li><strong>Frontend Receives:</strong> The browser's <code>fetch</code> call completes, receiving the JSON
+                response containing the AI summary.</li>
+            <li><strong>Frontend Displays:</strong> The <code>script.js</code> code takes the summary text from the
+                response and displays it inside the AI sidebar's content area (<code>ai-analysis-content</code>),
+                potentially using a library like Showdown.js to render any Markdown formatting (like bullet points or
+                bold text) from the AI.</li>
+        </ol>
+        <p>Here's a simplified sequence diagram:</p>
+        <div class="mermaid">sequenceDiagram
+            participant User
+            participant FE as Frontend JS (script.js)
+            participant BE as Backend (/summarize)
+            participant AI as Google Generative AI
+            participant Sidebar as AI Sidebar UI
+
+            User-&gt;&gt;FE: Clicks "Analyze Diffs" Button
+            FE-&gt;&gt;FE: Prepare diffArray from currentDiffMap
+            FE-&gt;&gt;BE: fetch('/summarize', { method:'POST', body: formData(diffArray, filenames) })
+            BE-&gt;&gt;AI: Send diff data &amp; prompt for summary
+            AI--&gt;&gt;BE: Return generated summary text
+            BE--&gt;&gt;FE: Return JSON { summary: "AI text..." }
+            FE-&gt;&gt;Sidebar: Display summary in ai-analysis-content
+        </div>
+        <h2 id="diving-deeper-into-the-code">Diving Deeper into the Code </h2>
+        <p>Let's look at simplified snippets of the key parts.</p>
+        <p><strong>1. Frontend: Triggering Analysis and Handling Response (<code>script.js</code>)</strong></p>
+        <p>This shows the event listener on the button and the fetch call.</p>
+        <pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token comment">// File: compare/static/js/script.js (Simplified)</span>
+
+<span class="token comment">// Button element from index.html</span>
+<span class="token keyword keyword-const">const</span> analyzeDiffBtn <span class="token operator">=</span> <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token method function property-access">getElementById</span><span class="token punctuation">(</span><span class="token string">'analyze-diff-btn'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">// Content area in the sidebar</span>
+<span class="token keyword keyword-const">const</span> aiAnalysisContent <span class="token operator">=</span> <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token method function property-access">getElementById</span><span class="token punctuation">(</span><span class="token string">'ai-analysis-content'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">// Variables holding file info and diff results</span>
+<span class="token comment">// let file1Data, file2Data, currentDiffMap;</span>
+<span class="token keyword keyword-let">let</span> aiAnalysisResult <span class="token operator">=</span> <span class="token keyword null nil keyword-null">null</span><span class="token punctuation">;</span> <span class="token comment">// Cache for the result</span>
+
+analyzeDiffBtn<span class="token punctuation">.</span><span class="token method function property-access">addEventListener</span><span class="token punctuation">(</span><span class="token string">'click'</span><span class="token punctuation">,</span> <span class="token keyword keyword-async">async</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=&gt;</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>file1Data <span class="token operator">||</span> <span class="token operator">!</span>file2Data<span class="token punctuation">)</span> <span class="token keyword control-flow keyword-return">return</span><span class="token punctuation">;</span> <span class="token comment">// Need two files compared</span>
+
+    <span class="token function">openSidebar</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// Function to make the sidebar visible</span>
+
+    <span class="token comment">// If we already have a result, show it immediately</span>
+    <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span>aiAnalysisResult<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">renderAiAnalysis</span><span class="token punctuation">(</span>aiAnalysisResult<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword control-flow keyword-return">return</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    aiAnalysisContent<span class="token punctuation">.</span><span class="token property-access">innerHTML</span> <span class="token operator">=</span> <span class="token string">'&lt;p&gt;&lt;i class="fas fa-spinner fa-spin"&gt;&lt;/i&gt; Generating analysis...&lt;/p&gt;'</span><span class="token punctuation">;</span> <span class="token comment">// Loading state</span>
+    analyzeDiffBtn<span class="token punctuation">.</span><span class="token property-access">disabled</span> <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">;</span> <span class="token comment">// Prevent multiple clicks</span>
+
+    <span class="token keyword control-flow keyword-try">try</span> <span class="token punctuation">{</span>
+        <span class="token comment">// --- Prepare Data ---</span>
+        <span class="token keyword keyword-const">const</span> diffArray <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+        <span class="token keyword control-flow keyword-for">for</span> <span class="token punctuation">(</span><span class="token keyword keyword-const">const</span> <span class="token punctuation">[</span>path<span class="token punctuation">,</span> info<span class="token punctuation">]</span> <span class="token keyword keyword-of">of</span> currentDiffMap<span class="token punctuation">.</span><span class="token method function property-access">entries</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token comment">// Only include actual differences</span>
+            <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span>info<span class="token punctuation">.</span><span class="token property-access">type</span> <span class="token operator">!==</span> <span class="token string">'equal'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                diffArray<span class="token punctuation">.</span><span class="token method function property-access">push</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+                    <span class="token literal-property property">path</span><span class="token operator">:</span> path<span class="token punctuation">,</span>
+                    <span class="token literal-property property">type</span><span class="token operator">:</span> info<span class="token punctuation">.</span><span class="token property-access">type</span><span class="token punctuation">,</span>
+                    <span class="token comment">// Truncate values to avoid sending huge amounts of data</span>
+                    <span class="token literal-property property">left</span><span class="token operator">:</span> <span class="token function">truncateValue</span><span class="token punctuation">(</span>info<span class="token punctuation">.</span><span class="token property-access">left</span><span class="token punctuation">,</span> <span class="token number">150</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token comment">// Max 150 chars</span>
+                    <span class="token literal-property property">right</span><span class="token operator">:</span> <span class="token function">truncateValue</span><span class="token punctuation">(</span>info<span class="token punctuation">.</span><span class="token property-access">right</span><span class="token punctuation">,</span> <span class="token number">150</span><span class="token punctuation">)</span>
+                <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+        <span class="token comment">// Sort for consistency (optional but good practice)</span>
+        diffArray<span class="token punctuation">.</span><span class="token method function property-access">sort</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter">a<span class="token punctuation">,</span> b</span><span class="token punctuation">)</span> <span class="token arrow operator">=&gt;</span> a<span class="token punctuation">.</span><span class="token property-access">path</span><span class="token punctuation">.</span><span class="token method function property-access">localeCompare</span><span class="token punctuation">(</span>b<span class="token punctuation">.</span><span class="token property-access">path</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token comment">// Package data for sending</span>
+        <span class="token keyword keyword-const">const</span> formData <span class="token operator">=</span> <span class="token keyword keyword-new">new</span> <span class="token class-name">FormData</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        formData<span class="token punctuation">.</span><span class="token method function property-access">append</span><span class="token punctuation">(</span><span class="token string">'filename1'</span><span class="token punctuation">,</span> file1Data<span class="token punctuation">.</span><span class="token property-access">name</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        formData<span class="token punctuation">.</span><span class="token method function property-access">append</span><span class="token punctuation">(</span><span class="token string">'filename2'</span><span class="token punctuation">,</span> file2Data<span class="token punctuation">.</span><span class="token property-access">name</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token comment">// Send the difference list as a JSON string</span>
+        formData<span class="token punctuation">.</span><span class="token method function property-access">append</span><span class="token punctuation">(</span><span class="token string">'diffData'</span><span class="token punctuation">,</span> <span class="token known-class-name class-name">JSON</span><span class="token punctuation">.</span><span class="token method function property-access">stringify</span><span class="token punctuation">(</span>diffArray<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token comment">// --- Send to Backend ---</span>
+        <span class="token keyword keyword-const">const</span> response <span class="token operator">=</span> <span class="token keyword control-flow keyword-await">await</span> <span class="token function">fetch</span><span class="token punctuation">(</span><span class="token string">'/summarize'</span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
+            <span class="token literal-property property">method</span><span class="token operator">:</span> <span class="token string">'POST'</span><span class="token punctuation">,</span>
+            <span class="token literal-property property">body</span><span class="token operator">:</span> formData
+        <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>response<span class="token punctuation">.</span><span class="token property-access">ok</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token comment">// Handle server errors...</span>
+            <span class="token keyword control-flow keyword-throw">throw</span> <span class="token keyword keyword-new">new</span> <span class="token class-name">Error</span><span class="token punctuation">(</span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">Server error: </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>response<span class="token punctuation">.</span><span class="token property-access">statusText</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword keyword-const">const</span> result <span class="token operator">=</span> <span class="token keyword control-flow keyword-await">await</span> response<span class="token punctuation">.</span><span class="token method function property-access">json</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// Expect JSON back { summary: "..." }</span>
+
+        <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span>result<span class="token punctuation">.</span><span class="token property-access">error</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword control-flow keyword-throw">throw</span> <span class="token keyword keyword-new">new</span> <span class="token class-name">Error</span><span class="token punctuation">(</span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">Analysis Error: </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>result<span class="token punctuation">.</span><span class="token property-access">error</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment">// Store and display the result</span>
+        aiAnalysisResult <span class="token operator">=</span> result<span class="token punctuation">.</span><span class="token property-access">summary</span> <span class="token operator">||</span> <span class="token string">'No analysis received.'</span><span class="token punctuation">;</span>
+        <span class="token function">renderAiAnalysis</span><span class="token punctuation">(</span>aiAnalysisResult<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// Display in sidebar</span>
+
+    <span class="token punctuation">}</span> <span class="token keyword control-flow keyword-catch">catch</span> <span class="token punctuation">(</span>error<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">error</span><span class="token punctuation">(</span><span class="token string">'Analysis Error:'</span><span class="token punctuation">,</span> error<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        aiAnalysisContent<span class="token punctuation">.</span><span class="token property-access">innerHTML</span> <span class="token operator">=</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token html language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>p</span> <span class="token special-attr"><span class="token attr-name">style</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span><span class="token value css language-css"><span class="token property">color</span><span class="token punctuation">:</span> <span class="token color">red</span><span class="token punctuation">;</span></span><span class="token punctuation">"</span></span></span><span class="token punctuation">&gt;</span></span>Failed: <span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span><span class="token function">escapeHtml</span><span class="token punctuation">(</span>error<span class="token punctuation">.</span><span class="token property-access">message</span><span class="token punctuation">)</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>p</span><span class="token punctuation">&gt;</span></span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span> <span class="token keyword control-flow keyword-finally">finally</span> <span class="token punctuation">{</span>
+        analyzeDiffBtn<span class="token punctuation">.</span><span class="token property-access">disabled</span> <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span> <span class="token comment">// Re-enable button</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment">// Helper to truncate long values (simplified)</span>
+<span class="token keyword keyword-function">function</span> <span class="token function">truncateValue</span><span class="token punctuation">(</span><span class="token parameter">value<span class="token punctuation">,</span> maxLength <span class="token operator">=</span> <span class="token number">100</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword keyword-const">const</span> stringValue <span class="token operator">=</span> <span class="token known-class-name class-name">String</span><span class="token punctuation">(</span>value<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// Convert to string</span>
+    <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span>stringValue<span class="token punctuation">.</span><span class="token property-access">length</span> <span class="token operator">&gt;</span> maxLength<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword control-flow keyword-return">return</span> stringValue<span class="token punctuation">.</span><span class="token method function property-access">substring</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> maxLength<span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token string">'...'</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword control-flow keyword-return">return</span> stringValue<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// Helper to display text (potentially Markdown) in the sidebar</span>
+<span class="token keyword keyword-function">function</span> <span class="token function">renderAiAnalysis</span><span class="token punctuation">(</span><span class="token parameter">content</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+   <span class="token comment">// Use Showdown library (if available) to convert Markdown to HTML</span>
+   <span class="token comment">// Otherwise, display as preformatted text</span>
+    <span class="token keyword control-flow keyword-try">try</span> <span class="token punctuation">{</span>
+        <span class="token keyword keyword-const">const</span> converter <span class="token operator">=</span> <span class="token keyword keyword-new">new</span> <span class="token class-name">showdown<span class="token punctuation">.</span>Converter</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// Assumes Showdown is loaded</span>
+        aiAnalysisContent<span class="token punctuation">.</span><span class="token property-access">innerHTML</span> <span class="token operator">=</span> converter<span class="token punctuation">.</span><span class="token method function property-access">makeHtml</span><span class="token punctuation">(</span>content<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span> <span class="token keyword control-flow keyword-catch">catch</span> <span class="token punctuation">(</span>e<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        aiAnalysisContent<span class="token punctuation">.</span><span class="token property-access">innerHTML</span> <span class="token operator">=</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token html language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>pre</span><span class="token punctuation">&gt;</span></span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span><span class="token function">escapeHtml</span><span class="token punctuation">(</span>content<span class="token punctuation">)</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>pre</span><span class="token punctuation">&gt;</span></span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">;</span> <span class="token comment">// Fallback</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// Helper to safely display text in HTML</span>
+<span class="token keyword keyword-function">function</span> <span class="token function">escapeHtml</span><span class="token punctuation">(</span><span class="token parameter">unsafe</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow keyword-return">return</span> <span class="token known-class-name class-name">String</span><span class="token punctuation">(</span>unsafe<span class="token punctuation">)</span>
+         <span class="token punctuation">.</span><span class="token method function property-access">replace</span><span class="token punctuation">(</span><span class="token regex"><span class="token regex-delimiter">/</span><span class="token regex-source language-regex">&amp;</span><span class="token regex-delimiter">/</span><span class="token regex-flags">g</span></span><span class="token punctuation">,</span> <span class="token string">"&amp;amp;"</span><span class="token punctuation">)</span>
+         <span class="token punctuation">.</span><span class="token method function property-access">replace</span><span class="token punctuation">(</span><span class="token regex"><span class="token regex-delimiter">/</span><span class="token regex-source language-regex">&lt;</span><span class="token regex-delimiter">/</span><span class="token regex-flags">g</span></span><span class="token punctuation">,</span> <span class="token string">"&amp;lt;"</span><span class="token punctuation">)</span>
+         <span class="token comment">// ... other replacements ...</span>
+         <span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+        <p>This JavaScript code does the following:</p>
+        <ul>
+            <li>Listens for clicks on the <code>analyze-diff-btn</code>.</li>
+            <li>Opens the sidebar (<code>openSidebar</code>).</li>
+            <li>Checks if the analysis (<code>aiAnalysisResult</code>) was already fetched and displays it.</li>
+            <li>Shows a loading spinner in <code>aiAnalysisContent</code>.</li>
+            <li>Iterates through the <code>currentDiffMap</code>, creating a simplified <code>diffArray</code> with
+                truncated values using <code>truncateValue</code>.</li>
+            <li>Sends the filenames and <code>diffArray</code> (as a JSON string) to the <code>/summarize</code> backend
+                endpoint via <code>fetch</code>.</li>
+            <li>Handles the JSON response, storing the <code>summary</code> in <code>aiAnalysisResult</code>.</li>
+            <li>Calls <code>renderAiAnalysis</code> to display the summary, using Showdown.js if available to format
+                Markdown.</li>
+            <li>Includes basic error handling.</li>
+        </ul>
+        <p><strong>2. Backend: Receiving Request and Calling AI (<code>app.py</code>)</strong></p>
+        <p>This shows the Flask route that handles the <code>/summarize</code> request.</p>
+        <pre data-role="codeBlock" data-info="python" class="language-python python"><code><span class="token comment"># File: app.py (Simplified Backend Logic)</span>
+<span class="token comment"># Needs: Flask, google-generativeai (from requirements.txt), json, os</span>
+
+<span class="token keyword keyword-from">from</span> flask <span class="token keyword keyword-import">import</span> Flask<span class="token punctuation">,</span> request<span class="token punctuation">,</span> jsonify
+<span class="token keyword keyword-import">import</span> google<span class="token punctuation">.</span>generativeai <span class="token keyword keyword-as">as</span> genai
+<span class="token keyword keyword-import">import</span> json
+<span class="token keyword keyword-import">import</span> os
+<span class="token keyword keyword-from">from</span> dotenv <span class="token keyword keyword-import">import</span> load_dotenv
+
+load_dotenv<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment"># Load environment variables (like API keys)</span>
+
+app <span class="token operator">=</span> Flask<span class="token punctuation">(</span>__name__<span class="token punctuation">)</span>
+
+<span class="token comment"># Configure the Generative AI client (replace with your actual setup)</span>
+<span class="token keyword keyword-try">try</span><span class="token punctuation">:</span>
+    api_key <span class="token operator">=</span> os<span class="token punctuation">.</span>getenv<span class="token punctuation">(</span><span class="token string">"GEMINI_API_KEY"</span><span class="token punctuation">)</span>
+    <span class="token keyword keyword-if">if</span> <span class="token keyword keyword-not">not</span> api_key<span class="token punctuation">:</span>
+        <span class="token keyword keyword-print">print</span><span class="token punctuation">(</span><span class="token string">"Warning: GEMINI_API_KEY not found in environment variables."</span><span class="token punctuation">)</span>
+        <span class="token comment"># Allow app to run but AI features will fail gracefully later</span>
+    <span class="token keyword keyword-else">else</span><span class="token punctuation">:</span>
+        genai<span class="token punctuation">.</span>configure<span class="token punctuation">(</span>api_key<span class="token operator">=</span>api_key<span class="token punctuation">)</span>
+        <span class="token comment"># Create the model instance (adjust model name as needed)</span>
+        model <span class="token operator">=</span> genai<span class="token punctuation">.</span>GenerativeModel<span class="token punctuation">(</span><span class="token string">'gemini-1.5-flash'</span><span class="token punctuation">)</span> <span class="token comment"># Or another appropriate model</span>
+        <span class="token keyword keyword-print">print</span><span class="token punctuation">(</span><span class="token string">"Google Generative AI configured."</span><span class="token punctuation">)</span>
+<span class="token keyword keyword-except">except</span> Exception <span class="token keyword keyword-as">as</span> e<span class="token punctuation">:</span>
+    <span class="token keyword keyword-print">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"Error configuring Google Generative AI: </span><span class="token interpolation"><span class="token punctuation">{</span>e<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
+    model <span class="token operator">=</span> <span class="token boolean">None</span> <span class="token comment"># Ensure model is None if setup fails</span>
+
+
+<span class="token decorator annotation punctuation">@app<span class="token punctuation">.</span>route</span><span class="token punctuation">(</span><span class="token string">'/summarize'</span><span class="token punctuation">,</span> methods<span class="token operator">=</span><span class="token punctuation">[</span><span class="token string">'POST'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token keyword keyword-def">def</span> <span class="token function">summarize_diff</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword keyword-if">if</span> <span class="token keyword keyword-not">not</span> model<span class="token punctuation">:</span>
+         <span class="token keyword keyword-return">return</span> jsonify<span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token string">"error"</span><span class="token punctuation">:</span> <span class="token string">"AI model not configured on the server."</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">500</span>
+
+    <span class="token keyword keyword-try">try</span><span class="token punctuation">:</span>
+        <span class="token comment"># 1. Get data from the frontend request</span>
+        filename1 <span class="token operator">=</span> request<span class="token punctuation">.</span>form<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">'filename1'</span><span class="token punctuation">,</span> <span class="token string">'File 1'</span><span class="token punctuation">)</span>
+        filename2 <span class="token operator">=</span> request<span class="token punctuation">.</span>form<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">'filename2'</span><span class="token punctuation">,</span> <span class="token string">'File 2'</span><span class="token punctuation">)</span>
+        diff_data_json <span class="token operator">=</span> request<span class="token punctuation">.</span>form<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">'diffData'</span><span class="token punctuation">,</span> <span class="token string">'[]'</span><span class="token punctuation">)</span>
+
+        <span class="token comment"># Parse the JSON string containing the difference list</span>
+        <span class="token keyword keyword-try">try</span><span class="token punctuation">:</span>
+            diff_list <span class="token operator">=</span> json<span class="token punctuation">.</span>loads<span class="token punctuation">(</span>diff_data_json<span class="token punctuation">)</span>
+        <span class="token keyword keyword-except">except</span> json<span class="token punctuation">.</span>JSONDecodeError<span class="token punctuation">:</span>
+            <span class="token keyword keyword-return">return</span> jsonify<span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token string">"error"</span><span class="token punctuation">:</span> <span class="token string">"Invalid difference data format received."</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">400</span>
+
+        <span class="token comment"># Limit the number of diffs sent to the AI to prevent overly large requests</span>
+        MAX_DIFFS_FOR_AI <span class="token operator">=</span> <span class="token number">200</span> <span class="token comment"># Example limit</span>
+        <span class="token keyword keyword-if">if</span> <span class="token builtin">len</span><span class="token punctuation">(</span>diff_list<span class="token punctuation">)</span> <span class="token operator">&gt;</span> MAX_DIFFS_FOR_AI<span class="token punctuation">:</span>
+            diff_list <span class="token operator">=</span> diff_list<span class="token punctuation">[</span><span class="token punctuation">:</span>MAX_DIFFS_FOR_AI<span class="token punctuation">]</span>
+            <span class="token comment"># Add a note about truncation if needed</span>
+
+        <span class="token comment"># 2. Format the differences into a string for the AI prompt</span>
+        diff_summary_text <span class="token operator">=</span> <span class="token string">""</span>
+        <span class="token keyword keyword-for">for</span> diff <span class="token keyword keyword-in">in</span> diff_list<span class="token punctuation">:</span>
+            diff_summary_text <span class="token operator">+=</span> <span class="token string-interpolation"><span class="token string">f"- Path: </span><span class="token interpolation"><span class="token punctuation">{</span>diff<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">'path'</span><span class="token punctuation">,</span> <span class="token string">'N/A'</span><span class="token punctuation">)</span><span class="token punctuation">}</span></span><span class="token string">, Type: </span><span class="token interpolation"><span class="token punctuation">{</span>diff<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">'type'</span><span class="token punctuation">,</span> <span class="token string">'N/A'</span><span class="token punctuation">)</span><span class="token punctuation">}</span></span><span class="token string">\n"</span></span>
+            <span class="token keyword keyword-if">if</span> diff<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">'type'</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token string">'modified'</span><span class="token punctuation">:</span>
+                 diff_summary_text <span class="token operator">+=</span> <span class="token string-interpolation"><span class="token string">f"  - From: </span><span class="token interpolation"><span class="token punctuation">{</span>diff<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">'left'</span><span class="token punctuation">,</span> <span class="token string">'N/A'</span><span class="token punctuation">)</span><span class="token punctuation">}</span></span><span class="token string">\n  - To: </span><span class="token interpolation"><span class="token punctuation">{</span>diff<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">'right'</span><span class="token punctuation">,</span> <span class="token string">'N/A'</span><span class="token punctuation">)</span><span class="token punctuation">}</span></span><span class="token string">\n"</span></span>
+            <span class="token keyword keyword-elif">elif</span> diff<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">'type'</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token string">'added'</span><span class="token punctuation">:</span>
+                  diff_summary_text <span class="token operator">+=</span> <span class="token string-interpolation"><span class="token string">f"  - Added Value: </span><span class="token interpolation"><span class="token punctuation">{</span>diff<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">'right'</span><span class="token punctuation">,</span> <span class="token string">'N/A'</span><span class="token punctuation">)</span><span class="token punctuation">}</span></span><span class="token string">\n"</span></span>
+            <span class="token keyword keyword-elif">elif</span> diff<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">'type'</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token string">'deleted'</span><span class="token punctuation">:</span>
+                  diff_summary_text <span class="token operator">+=</span> <span class="token string-interpolation"><span class="token string">f"  - Deleted Value: </span><span class="token interpolation"><span class="token punctuation">{</span>diff<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">'left'</span><span class="token punctuation">,</span> <span class="token string">'N/A'</span><span class="token punctuation">)</span><span class="token punctuation">}</span></span><span class="token string">\n"</span></span>
+            diff_summary_text <span class="token operator">+=</span> <span class="token string">"---\n"</span> <span class="token comment"># Separator</span>
+
+
+        <span class="token comment"># 3. Create the prompt for the AI</span>
+        <span class="token comment">#    (This prompt can be significantly enhanced for better results)</span>
+        prompt <span class="token operator">=</span> <span class="token string-interpolation"><span class="token string">f"""
+Analyze the differences between two ARXML files: '</span><span class="token interpolation"><span class="token punctuation">{</span>filename1<span class="token punctuation">}</span></span><span class="token string">' and '</span><span class="token interpolation"><span class="token punctuation">{</span>filename2<span class="token punctuation">}</span></span><span class="token string">'.
+Here is a summary of the detected changes (path, type, values):
+
+</span><span class="token interpolation"><span class="token punctuation">{</span>diff_summary_text<span class="token punctuation">}</span></span><span class="token string">
+
+Based *only* on this list of differences, provide a concise, high-level summary in Markdown format. Focus on:
+- Key areas of change (e.g., specific packages, components).
+- Common types of changes (e.g., many SHORT-NAME modifications, added elements).
+- Any potentially significant additions or deletions.
+Do not invent information not present in the differences list.
+Keep the summary brief and easy to understand. Start with a title like "### Analysis Summary".
+"""</span></span>
+
+        <span class="token comment"># 4. --- Call the External AI Service ---</span>
+        <span class="token keyword keyword-print">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"Sending prompt to AI for </span><span class="token interpolation"><span class="token punctuation">{</span>filename1<span class="token punctuation">}</span></span><span class="token string"> vs </span><span class="token interpolation"><span class="token punctuation">{</span>filename2<span class="token punctuation">}</span></span><span class="token string">..."</span></span><span class="token punctuation">)</span>
+        <span class="token comment"># Placeholder for the actual API call</span>
+        <span class="token comment"># response = model.generate_content(prompt) # This is the actual call</span>
+        <span class="token comment"># ai_summary = response.text # Extract the text part of the AI's response</span>
+
+        <span class="token comment"># *** Using Dummy Data for Tutorial Simplicity ***</span>
+        <span class="token comment"># In a real scenario, you'd uncomment the lines above and handle potential AI API errors.</span>
+        ai_summary <span class="token operator">=</span> <span class="token string-interpolation"><span class="token string">f"""
+### Analysis Summary (Dummy Response)
+
+Based on the provided differences between **</span><span class="token interpolation"><span class="token punctuation">{</span>filename1<span class="token punctuation">}</span></span><span class="token string">** and **</span><span class="token interpolation"><span class="token punctuation">{</span>filename2<span class="token punctuation">}</span></span><span class="token string">**:
+
+*   **Modifications:** Several changes were noted, particularly in `SHORT-NAME` values within various packages.
+*   **Additions:** Some elements appear to have been added, like specific parameters or potentially new component prototypes.
+*   **Deletions:** A few elements seem to have been removed.
+
+*This is a placeholder summary. The actual AI would provide more specific insights based on the real difference data.*
+"""</span></span>
+        <span class="token keyword keyword-print">print</span><span class="token punctuation">(</span><span class="token string">"Received dummy summary from AI."</span><span class="token punctuation">)</span>
+
+
+        <span class="token comment"># 5. Return the summary to the frontend</span>
+        <span class="token keyword keyword-return">return</span> jsonify<span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token string">"summary"</span><span class="token punctuation">:</span> ai_summary<span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+    <span class="token keyword keyword-except">except</span> Exception <span class="token keyword keyword-as">as</span> e<span class="token punctuation">:</span>
+        <span class="token keyword keyword-print">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"Error during summarization: </span><span class="token interpolation"><span class="token punctuation">{</span>e<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
+        <span class="token comment"># Log the full error for debugging on the server</span>
+        <span class="token comment"># logger.exception("Summarization Error")</span>
+        <span class="token keyword keyword-return">return</span> jsonify<span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token string">"error"</span><span class="token punctuation">:</span> <span class="token string-interpolation"><span class="token string">f"An internal error occurred during analysis: </span><span class="token interpolation"><span class="token punctuation">{</span><span class="token builtin">str</span><span class="token punctuation">(</span>e<span class="token punctuation">)</span><span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">500</span>
+
+<span class="token comment"># (Need other Flask setup, e.g., if __name__ == '__main__': app.run(...))</span>
+</code></pre>
+        <p>This Python code defines the <code>/summarize</code> endpoint:</p>
+        <ul>
+            <li>It receives the filenames and the <code>diffData</code> JSON string from the frontend request.</li>
+            <li>It parses the <code>diffData</code> string back into a Python list (<code>diff_list</code>).</li>
+            <li>It formats the differences into a readable text block (<code>diff_summary_text</code>).</li>
+            <li>It constructs a <code>prompt</code> for the AI, including the file names and the difference text.</li>
+            <li><strong>Crucially</strong>, it shows <em>where</em> the call to the external AI service
+                (<code>model.generate_content(prompt)</code>) would happen (currently commented out and replaced with
+                dummy data for simplicity in this tutorial).</li>
+            <li>It takes the AI's response (<code>ai_summary</code>).</li>
+            <li>It sends the summary back to the frontend within a JSON object using <code>jsonify</code>.</li>
+            <li>Includes basic error handling for JSON parsing and the overall process.</li>
+        </ul>
+        <h2 id="conclusion">Conclusion </h2>
+        <p>The AI Difference Analysis feature in ARXplore acts as an intelligent assistant. By preparing a summary of
+            the differences detected by the <a href="05_client_side_comparison_logic_.html">Client-Side Comparison
+                Logic</a> and sending it to an external AI service via the <code>/summarize</code> backend endpoint, it
+            provides users with a high-level, natural language overview of the changes. This complements the detailed
+            highlighting shown by the <a href="06_difference_visualization___sync_.md">Difference Visualization &amp;
+                Sync</a>, helping you quickly grasp the main points of divergence between two ARXML file versions
+            without needing to manually interpret every single highlighted change. It transforms a raw list of
+            differences into actionable insights.</p>
+        <p>This concludes our journey through the core concepts of ARXplore v1.0! We hope these chapters have given you a
+            clear understanding of how the tool manages interactions, processes files, represents data, renders views,
+            compares content, visualizes differences, and even leverages AI for analysis.</p>
+        <hr>
+        <p>Generated by <a href="https://github.com/The-Pocket/Tutorial-Codebase-Knowledge">AI Codebase Knowledge
+                Builder</a></p>
+
+    </div>
+
+
+
+
+    <script type="module">
+        // TODO: If ZenUML gets integrated into mermaid in the future,
+        //      we can remove the following lines.
+
+
+        var MERMAID_CONFIG = ({ "startOnLoad": false });
+        if (typeof MERMAID_CONFIG !== 'undefined') {
+            MERMAID_CONFIG.startOnLoad = false
+            MERMAID_CONFIG.cloneCssStyles = false
+            MERMAID_CONFIG.theme = "default"
+        }
+
+        mermaid.initialize(MERMAID_CONFIG || {})
+        if (typeof (window['Reveal']) !== 'undefined') {
+            function mermaidRevealHelper(event) {
+                var currentSlide = event.currentSlide
+                var diagrams = currentSlide.querySelectorAll('.mermaid')
+                for (var i = 0; i < diagrams.length; i++) {
+                    var diagram = diagrams[i]
+                    if (!diagram.hasAttribute('data-processed')) {
+                        mermaid.init(null, diagram, () => {
+                            Reveal.slide(event.indexh, event.indexv)
+                        })
+                    }
+                }
+            }
+            Reveal.addEventListener('slidetransitionend', mermaidRevealHelper)
+            Reveal.addEventListener('ready', mermaidRevealHelper)
+            await mermaid.run({
+                nodes: document.querySelectorAll('.mermaid')
+            })
+        } else {
+            await mermaid.run({
+                nodes: document.querySelectorAll('.mermaid')
+            })
+        }
+    </script>
+
+
+
+
+</body>
+
+</html>

@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>05_client_side_comparison_logic_</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="katex.min.css">
+
+
+  <script type="text/javascript" src="mermaid.min.js" charset="UTF-8"></script>
+
+  <link rel="stylesheet" href="style.css">
+
+  <script type="text/javascript" src="sidebar.js"></script>
+
+
+
+  </script>
+</head>
+
+     
+<body  for="html-export" >
+
+
+  <div class="crossnote markdown-preview  ">
+
+    <h1 id="chapter-5-client-side-comparison-logic">Chapter 5: Client-Side Comparison Logic </h1>
+    <p>Welcome back! In the <a href="04_dynamic_tree_view_rendering_.html">previous chapter</a>, we saw how ARXplore
+      takes the processed JSON data (<code>parsedData1</code> and <code>parsedData2</code>) and magically draws the
+      interactive tree views you see on the screen. This is great for exploring the structure of each file individually.
+    </p>
+    <p>But what if you loaded <em>two</em> files? The main goal of ARXplore is often to understand exactly what changed
+      between two versions of an ARXML file. We need a way to pinpoint every single difference, big or small.</p>
+    <p>This is where the <strong>Client-Side Comparison Logic</strong> comes into play. It's the detective work that
+      happens entirely within your web browser <em>after</em> both files have been processed into JSON.</p>
+    <h2 id="the-problem-finding-the-differences">The Problem: Finding the Differences </h2>
+    <p>Imagine you have two slightly different versions of a large, complex document (like our <code>parsedData1</code>
+      and <code>parsedData2</code> JSON structures). How do you systematically find every single change? Doing it
+      manually would be incredibly tedious and error-prone.</p>
+    <p>We need an automated process that can compare the two structures, element by element, value by value, and record
+      every discrepancy it finds.</p>
+    <h2 id="the-solution-the-browsers-internal-auditor">The Solution: The Browser's Internal Auditor </h2>
+    <p>Think of the Client-Side Comparison Logic as a meticulous auditor working directly within your browser. As soon
+      as the browser has the JSON data for both files (<code>parsedData1</code> and <code>parsedData2</code>), this
+      auditor gets to work.</p>
+    <ol>
+      <li><strong>Starts at the Top:</strong> The auditor begins by looking at the very top level of both JSON
+        structures.</li>
+      <li><strong>Goes Deeper (Recursion):</strong> If it finds an element that exists in both files (like an
+        <code>AR-PACKAGE</code>), it dives deeper to compare the contents <em>inside</em> that element. It keeps going
+        deeper and deeper, level by level, like opening nested boxes to compare what's inside each one. This process of
+        a function calling itself to handle nested structures is called <strong>recursion</strong>.</li>
+      <li><strong>Checks Everything:</strong> At each level, the auditor checks:
+        <ul>
+          <li>Are the values the same? (e.g., Is the <code>SHORT-NAME</code> the same?)</li>
+          <li>Are there items present in the first file but missing in the second? (<strong>Deleted</strong>)</li>
+          <li>Are there items present in the second file but missing in the first? (<strong>Added</strong>)</li>
+          <li>Are items present in both, but their values or inner contents differ? (<strong>Modified</strong>)</li>
+        </ul>
+      </li>
+      <li><strong>Records Findings:</strong> Every time the auditor finds a difference, it meticulously records it in a
+        special logbook called the <code>currentDiffMap</code>. This map doesn't just say "there's a difference here";
+        it records the exact location (the "path") within the JSON structure, the <em>type</em> of difference (added,
+        deleted, modified), and often the original value (from file 1) and the new value (from file 2).</li>
+    </ol>
+    <p>This entire comparison happens <em>client-side</em>, meaning it runs directly in your browser using JavaScript.
+      It doesn't need to talk back to the server after the initial file processing. This makes the comparison phase fast
+      and responsive.</p>
+    <h2 id="how-it-works-the-comparison-process">How It Works: The Comparison Process </h2>
+    <p>Let's see how this comparison is triggered and what happens conceptually.</p>
+    <ol>
+      <li>
+        <p><strong>Files Processed:</strong> You upload two files, and click "Process". The <a
+            href="02_arxml_file_processing_.html">ARXML File Processing</a> happens, and the resulting JSON is stored in
+          <code>parsedData1</code> and <code>parsedData2</code> (as covered in <a
+            href="03_frontend_data_representation_.html">Frontend Data Representation</a>).</p>
+      </li>
+      <li>
+        <p><strong>Comparison Triggered:</strong> The <code>processFiles</code> function in <code>script.js</code> (part
+          of <a href="01_ui_state_management___interaction_.html">UI State Management &amp; Interaction</a>) sees that
+          we are in compare mode (<code>isCompareMode</code> is true) and calls the main comparison function,
+          <code>compareObjects</code>.</p>
+        <pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token comment">// File: compare/static/js/script.js (Inside processFiles function)</span>
+
+<span class="token comment">// ... after processing both files ...</span>
+<span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span>isCompareMode<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    parsedData2 <span class="token operator">=</span> <span class="token keyword control-flow keyword-await">await</span> <span class="token function">sendFileForParsing</span><span class="token punctuation">(</span>file2Data<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">// ... error check ...</span>
+
+    <span class="token comment">// --- Perform Comparison ---</span>
+    <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token string">"Starting client-side comparison..."</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">// Call the main comparison function</span>
+    currentDiffMap <span class="token operator">=</span> <span class="token function">compareObjects</span><span class="token punctuation">(</span>parsedData1<span class="token punctuation">,</span> parsedData2<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">Comparison finished. Found </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>currentDiffMap<span class="token punctuation">.</span><span class="token property-access">size</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> differences.</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">// ... update UI etc. ...</span>
+<span class="token punctuation">}</span>
+<span class="token comment">// ...</span>
+</code></pre>
+        <p>This snippet shows that right after getting <code>parsedData2</code>, the <code>compareObjects</code>
+          function is called with the two JSON data structures. The result (the logbook of differences) is stored in the
+          <code>currentDiffMap</code> variable.</p>
+      </li>
+      <li>
+        <p><strong>Recursive Dive:</strong> The <code>compareObjects</code> function sets things up and then calls a
+          helper function, <code>recursiveCompare</code>, starting at the root of the JSON data.
+          <code>recursiveCompare</code> then does the heavy lifting:</p>
+        <ul>
+          <li>It compares the current items (values, objects, or arrays) at the given <code>currentPath</code>.</li>
+          <li>If the items are objects or arrays, it calls <em>itself</em> (<code>recursiveCompare</code>) for each
+            child element or array item, updating the <code>currentPath</code>.</li>
+          <li>If it finds a difference (values not equal, item added/deleted, types different), it adds an entry to the
+            <code>currentDiffMap</code>.</li>
+        </ul>
+      </li>
+    </ol>
+    <h2 id="storing-the-differences-the-currentdiffmap">Storing the Differences: The <code>currentDiffMap</code> </h2>
+    <p>The <code>currentDiffMap</code> is a JavaScript <code>Map</code> object. Think of it like a dictionary or a
+      logbook where each entry has two parts:</p>
+    <ul>
+      <li><strong>Key:</strong> A string representing the path to the data element where the difference occurred. This
+        path looks like <code>AUTOSAR/AR-PACKAGES/AR-PACKAGE[0]/SHORT-NAME</code>.</li>
+      <li><strong>Value:</strong> An object describing the difference, containing:
+        <ul>
+          <li><code>type</code>: A string like <code>'modified'</code>, <code>'added'</code>, or <code>'deleted'</code>.
+          </li>
+          <li><code>left</code>: The value from the first file (<code>parsedData1</code>) at that path. Might be
+            <code>null</code> if the item was added.</li>
+          <li><code>right</code>: The value from the second file (<code>parsedData2</code>) at that path. Might be
+            <code>null</code> if the item was deleted.</li>
+        </ul>
+      </li>
+    </ul>
+    <p><strong>Example <code>currentDiffMap</code> Entry:</strong></p>
+    <p>Let's say the <code>&lt;SHORT-NAME&gt;</code> inside the first <code>AR-PACKAGE</code> changed from "OldPackage"
+      to "NewPackage". The <code>currentDiffMap</code> might contain an entry like this:</p>
+    <ul>
+      <li><strong>Key:</strong> <code>"AUTOSAR/AR-PACKAGES/AR-PACKAGE[0]/SHORT-NAME"</code></li>
+      <li><strong>Value:</strong> <code>{ type: 'modified', left: 'OldPackage', right: 'NewPackage' }</code></li>
+    </ul>
+    <p>If a whole component was added in the second file, there might be an entry:</p>
+    <ul>
+      <li><strong>Key:</strong> <code>"AUTOSAR/ELEMENTS/SW-COMPONENT-PROTOTYPE[1]"</code></li>
+      <li><strong>Value:</strong> <code>{ type: 'added', left: null, right: { /*... full component data ...*/ } }</code>
+      </li>
+    </ul>
+    <p>This structured map of differences is the crucial output of the comparison logic.</p>
+    <h2 id="under-the-hood-the-recursive-comparison">Under the Hood: The Recursive Comparison </h2>
+    <p>How does the code actually perform this recursive comparison?</p>
+    <p>Imagine comparing two nested boxes:</p>
+    <ol>
+      <li>You look at the outermost boxes (<code>AUTOSAR</code>). Are they the same type? Yes.</li>
+      <li>You open them. Inside, you find <code>AR-PACKAGES</code>. Are they the same type? Yes.</li>
+      <li>You open <code>AR-PACKAGES</code>. Inside, you find lists of <code>AR-PACKAGE</code> boxes.</li>
+      <li>You compare the first <code>AR-PACKAGE</code> box from each list. Are they the same type? Yes.</li>
+      <li>You open these <code>AR-PACKAGE</code> boxes. Inside, you find <code>SHORT-NAME</code> labels and
+        <code>ELEMENTS</code> boxes.</li>
+      <li>You compare the <code>SHORT-NAME</code> labels. Are the text values identical?
+        <ul>
+          <li>If yes, do nothing.</li>
+          <li>If no, record a <code>'modified'</code> difference in the <code>currentDiffMap</code> for the path
+            <code>AUTOSAR/.../SHORT-NAME</code>.</li>
+        </ul>
+      </li>
+      <li>You compare the <code>ELEMENTS</code> boxes. Are they the same type? Yes.</li>
+      <li>You open the <code>ELEMENTS</code> boxes... and so on, recursively.</li>
+    </ol>
+    <p>If at any point you find a box in one list but not the other at the same position, you record an
+      <code>'added'</code> or <code>'deleted'</code> difference.</p>
+    <p>Here's a simplified sequence diagram:</p>
+    <div class="mermaid">sequenceDiagram
+      participant PF as processFiles()
+      participant CO as compareObjects()
+      participant RC as recursiveCompare()
+      participant DM as currentDiffMap
+
+      PF-&gt;&gt;CO: compareObjects(data1, data2)
+      CO-&gt;&gt;RC: recursiveCompare(data1.ROOT, data2.ROOT, ["ROOT"], DM)
+      RC-&gt;&gt;RC: recursiveCompare(value1_level1, value2_level1, ["ROOT", "Child1"], DM)
+      RC-&gt;&gt;RC: recursiveCompare(value1_level2, value2_level2, ["ROOT", "Child1", "SubChildA"], DM)
+      alt Values Differ
+      RC-&gt;&gt;DM: Add entry: {path: "ROOT/Child1/SubChildA", type: 'modified', ...}
+      end
+      RC--&gt;&gt;RC: Result (no difference here)
+      RC--&gt;&gt;RC: Result (no difference here)
+      RC--&gt;&gt;CO: Comparison complete
+      CO--&gt;&gt;PF: Returns populated currentDiffMap
+    </div>
+    <p>This shows <code>processFiles</code> starting the comparison, <code>compareObjects</code> initiating the
+      recursive process, and <code>recursiveCompare</code> diving deeper and potentially adding entries to the
+      <code>currentDiffMap</code> when differences are found.</p>
+    <h2 id="diving-deeper-into-the-code-simplified">Diving Deeper into the Code (Simplified) </h2>
+    <p>Let's look at the core functions.</p>
+    <p><strong>1. Setting up the Comparison (<code>compareObjects</code>)</strong></p>
+    <p>This function primarily handles the setup, like getting the root elements and starting the recursion.</p>
+    <pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token comment">// File: compare/static/js/script.js (Simplified)</span>
+
+<span class="token keyword keyword-function">function</span> <span class="token function">compareObjects</span><span class="token punctuation">(</span><span class="token parameter">obj1<span class="token punctuation">,</span> obj2</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token string">"compareObjects called"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword keyword-const">const</span> diffMap <span class="token operator">=</span> <span class="token keyword keyword-new">new</span> <span class="token class-name">Map</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// Create the empty logbook</span>
+
+    <span class="token comment">// Find the root keys (e.g., 'AUTOSAR')</span>
+    <span class="token keyword keyword-const">const</span> rootKey1 <span class="token operator">=</span> obj1 <span class="token operator">?</span> <span class="token known-class-name class-name">Object</span><span class="token punctuation">.</span><span class="token method function property-access">keys</span><span class="token punctuation">(</span>obj1<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">:</span> <span class="token keyword null nil keyword-null">null</span><span class="token punctuation">;</span>
+    <span class="token keyword keyword-const">const</span> rootKey2 <span class="token operator">=</span> obj2 <span class="token operator">?</span> <span class="token known-class-name class-name">Object</span><span class="token punctuation">.</span><span class="token method function property-access">keys</span><span class="token punctuation">(</span>obj2<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">:</span> <span class="token keyword null nil keyword-null">null</span><span class="token punctuation">;</span>
+
+    <span class="token comment">// Start the recursive comparison from the root element's *content*</span>
+    <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span>rootKey1 <span class="token operator">&amp;&amp;</span> rootKey1 <span class="token operator">===</span> rootKey2<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment">// Pass the root key as the start of the path</span>
+        <span class="token function">recursiveCompare</span><span class="token punctuation">(</span>obj1<span class="token punctuation">[</span>rootKey1<span class="token punctuation">]</span><span class="token punctuation">,</span> obj2<span class="token punctuation">[</span>rootKey1<span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">[</span>rootKey1<span class="token punctuation">]</span><span class="token punctuation">,</span> diffMap<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span> <span class="token keyword control-flow keyword-else">else</span> <span class="token punctuation">{</span>
+        <span class="token comment">// Handle cases where root elements don't even match (less common)</span>
+        <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">warn</span><span class="token punctuation">(</span><span class="token string">"Root keys differ or missing:"</span><span class="token punctuation">,</span> rootKey1<span class="token punctuation">,</span> rootKey2<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token comment">// (Simplified: Might add root level diffs here)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token string">"compareObjects finished, diffMap size:"</span><span class="token punctuation">,</span> diffMap<span class="token punctuation">.</span><span class="token property-access">size</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword control-flow keyword-return">return</span> diffMap<span class="token punctuation">;</span> <span class="token comment">// Return the populated logbook</span>
+<span class="token punctuation">}</span>
+</code></pre>
+    <p>This function initializes the <code>diffMap</code> and calls <code>recursiveCompare</code> on the actual data
+      <em>inside</em> the root XML tag (like the content within <code>&lt;AUTOSAR&gt;</code>).</p>
+    <p><strong>2. The Recursive Engine (<code>recursiveCompare</code>)</strong></p>
+    <p>This is where the real work happens. It compares two values (<code>val1</code>, <code>val2</code>) at a specific
+      <code>currentPath</code>.</p>
+    <pre data-role="codeBlock" data-info="javascript" class="language-javascript javascript"><code><span class="token comment">// File: compare/static/js/script.js (Simplified)</span>
+
+<span class="token keyword keyword-function">function</span> <span class="token function">recursiveCompare</span><span class="token punctuation">(</span><span class="token parameter">val1<span class="token punctuation">,</span> val2<span class="token punctuation">,</span> currentPath<span class="token punctuation">,</span> diffMap</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword keyword-const">const</span> pathString <span class="token operator">=</span> currentPath<span class="token punctuation">.</span><span class="token method function property-access">join</span><span class="token punctuation">(</span><span class="token string">'/'</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// e.g., "ROOT/Child/SubChild"</span>
+    <span class="token keyword keyword-const">const</span> type1 <span class="token operator">=</span> <span class="token keyword keyword-typeof">typeof</span> val1<span class="token punctuation">;</span>
+    <span class="token keyword keyword-const">const</span> type2 <span class="token operator">=</span> <span class="token keyword keyword-typeof">typeof</span> val2<span class="token punctuation">;</span>
+
+    <span class="token comment">// --- Base Cases: Differences Found ---</span>
+    <span class="token comment">// 1. If values are strictly identical, we're done for this path</span>
+    <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span>val1 <span class="token operator">===</span> val2<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword control-flow keyword-return">return</span><span class="token punctuation">;</span> <span class="token comment">// No difference here</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment">// 2. If one is null/undefined and the other isn't</span>
+    <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span>val1 <span class="token operator">==</span> <span class="token keyword null nil keyword-null">null</span> <span class="token operator">&amp;&amp;</span> val2 <span class="token operator">!=</span> <span class="token keyword null nil keyword-null">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        diffMap<span class="token punctuation">.</span><span class="token method function property-access">set</span><span class="token punctuation">(</span>pathString<span class="token punctuation">,</span> <span class="token punctuation">{</span> <span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token string">'deleted'</span><span class="token punctuation">,</span> <span class="token literal-property property">left</span><span class="token operator">:</span> <span class="token keyword null nil keyword-null">null</span><span class="token punctuation">,</span> <span class="token literal-property property">right</span><span class="token operator">:</span> val2 <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword control-flow keyword-return">return</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span>val1 <span class="token operator">!=</span> <span class="token keyword null nil keyword-null">null</span> <span class="token operator">&amp;&amp;</span> val2 <span class="token operator">==</span> <span class="token keyword null nil keyword-null">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        diffMap<span class="token punctuation">.</span><span class="token method function property-access">set</span><span class="token punctuation">(</span>pathString<span class="token punctuation">,</span> <span class="token punctuation">{</span> <span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token string">'deleted'</span><span class="token punctuation">,</span> <span class="token literal-property property">left</span><span class="token operator">:</span> val1<span class="token punctuation">,</span> <span class="token literal-property property">right</span><span class="token operator">:</span> <span class="token keyword null nil keyword-null">null</span> <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword control-flow keyword-return">return</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment">// 3. If types are different (and not null)</span>
+    <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span>type1 <span class="token operator">!==</span> type2<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        diffMap<span class="token punctuation">.</span><span class="token method function property-access">set</span><span class="token punctuation">(</span>pathString<span class="token punctuation">,</span> <span class="token punctuation">{</span> <span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token string">'modified'</span><span class="token punctuation">,</span> <span class="token literal-property property">left</span><span class="token operator">:</span> val1<span class="token punctuation">,</span> <span class="token literal-property property">right</span><span class="token operator">:</span> val2 <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword control-flow keyword-return">return</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment">// --- Recursive Cases: Dive Deeper ---</span>
+
+    <span class="token comment">// 4. If both are objects (but not arrays)</span>
+    <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span>type1 <span class="token operator">===</span> <span class="token string">'object'</span> <span class="token operator">&amp;&amp;</span> <span class="token operator">!</span><span class="token known-class-name class-name">Array</span><span class="token punctuation">.</span><span class="token method function property-access">isArray</span><span class="token punctuation">(</span>val1<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword keyword-const">const</span> allKeys <span class="token operator">=</span> <span class="token keyword keyword-new">new</span> <span class="token class-name">Set</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token spread operator">...</span><span class="token known-class-name class-name">Object</span><span class="token punctuation">.</span><span class="token method function property-access">keys</span><span class="token punctuation">(</span>val1<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token spread operator">...</span><span class="token known-class-name class-name">Object</span><span class="token punctuation">.</span><span class="token method function property-access">keys</span><span class="token punctuation">(</span>val2<span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword control-flow keyword-for">for</span> <span class="token punctuation">(</span><span class="token keyword keyword-const">const</span> key <span class="token keyword keyword-of">of</span> allKeys<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span>key <span class="token operator">===</span> <span class="token string">'@attributes'</span><span class="token punctuation">)</span> <span class="token keyword control-flow keyword-continue">continue</span><span class="token punctuation">;</span> <span class="token comment">// Skip attributes for simplicity here</span>
+            <span class="token comment">// Recursively call for each child key</span>
+            <span class="token function">recursiveCompare</span><span class="token punctuation">(</span>val1<span class="token punctuation">[</span>key<span class="token punctuation">]</span><span class="token punctuation">,</span> val2<span class="token punctuation">[</span>key<span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token spread operator">...</span>currentPath<span class="token punctuation">,</span> key<span class="token punctuation">]</span><span class="token punctuation">,</span> diffMap<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword control-flow keyword-return">return</span><span class="token punctuation">;</span> <span class="token comment">// Handled children recursively</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment">// 5. If both are arrays (Simplified: index-based comparison)</span>
+    <span class="token keyword control-flow keyword-if">if</span> <span class="token punctuation">(</span><span class="token known-class-name class-name">Array</span><span class="token punctuation">.</span><span class="token method function property-access">isArray</span><span class="token punctuation">(</span>val1<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword keyword-const">const</span> maxLength <span class="token operator">=</span> <span class="token known-class-name class-name">Math</span><span class="token punctuation">.</span><span class="token method function property-access">max</span><span class="token punctuation">(</span>val1<span class="token punctuation">.</span><span class="token property-access">length</span><span class="token punctuation">,</span> val2<span class="token punctuation">.</span><span class="token property-access">length</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword control-flow keyword-for">for</span> <span class="token punctuation">(</span><span class="token keyword keyword-let">let</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> maxLength<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token comment">// Create path like "PARENT[i]"</span>
+            <span class="token keyword keyword-const">const</span> itemPath <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token spread operator">...</span>currentPath<span class="token punctuation">,</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>currentPath<span class="token punctuation">.</span><span class="token method function property-access">slice</span><span class="token punctuation">(</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">[</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>i<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">]</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+             <span class="token comment">// Recursively call for each array item</span>
+            <span class="token function">recursiveCompare</span><span class="token punctuation">(</span>val1<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">,</span> val2<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">,</span> itemPath<span class="token punctuation">,</span> diffMap<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword control-flow keyword-return">return</span><span class="token punctuation">;</span> <span class="token comment">// Handled children recursively</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment">// --- Base Case: Simple Value Modification ---</span>
+    <span class="token comment">// If none of the above, types match, not objects/arrays, but values differed (from check #1)</span>
+    diffMap<span class="token punctuation">.</span><span class="token method function property-access">set</span><span class="token punctuation">(</span>pathString<span class="token punctuation">,</span> <span class="token punctuation">{</span> <span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token string">'modified'</span><span class="token punctuation">,</span> <span class="token literal-property property">left</span><span class="token operator">:</span> val1<span class="token punctuation">,</span> <span class="token literal-property property">right</span><span class="token operator">:</span> val2 <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+    <p>This simplified version shows the core logic:</p>
+    <ul>
+      <li>Check for basic differences (equality, nulls, types). If found, record in <code>diffMap</code> and stop for
+        this path.</li>
+      <li>If both items are objects or arrays, iterate through their contents (keys or indices) and call
+        <code>recursiveCompare</code> again for each child, extending the <code>currentPath</code>.</li>
+      <li>If they are simple, different values (like two different strings), record <code>'modified'</code>.</li>
+    </ul>
+    <p>The actual implementation (<code>compare/static/js/script.js</code>) has more sophisticated handling for arrays
+      (trying to match items by <code>&lt;SHORT-NAME&gt;</code> if possible) and marking parent nodes when children are
+      added/deleted, but this simplified version captures the fundamental recursive approach.</p>
+    <h2 id="conclusion">Conclusion </h2>
+    <p>The Client-Side Comparison Logic is ARXplore's internal auditor. It runs entirely in your browser, recursively
+      diving through the two processed JSON data structures (<code>parsedData1</code> and <code>parsedData2</code>). By
+      comparing values, checking for missing or extra elements, and noting type changes at every level, it builds a
+      comprehensive map of all differences – the <code>currentDiffMap</code>.</p>
+    <p>This <code>currentDiffMap</code> is the key result of the comparison. It doesn't directly change what you
+      <em>see</em> yet, but it holds all the information needed to visually highlight the changes in the tree view.</p>
+    <p>Now that we have this detailed map of differences, how does ARXplore actually use it to show you where the
+      changes are in the tree views and keep them synchronized? Let's explore that in the next chapter!</p>
+    <p>Next: <a href="06_difference_visualization___sync_.html">Difference Visualization &amp; Sync</a></p>
+    <hr>
+   
+
+  </div>
+
+
+
+
+  <script type="module">
+    // TODO: If ZenUML gets integrated into mermaid in the future,
+    //      we can remove the following lines.
+
+
+    var MERMAID_CONFIG = ({ "startOnLoad": false });
+    if (typeof MERMAID_CONFIG !== 'undefined') {
+      MERMAID_CONFIG.startOnLoad = false
+      MERMAID_CONFIG.cloneCssStyles = false
+      MERMAID_CONFIG.theme = "default"
+    }
+
+    mermaid.initialize(MERMAID_CONFIG || {})
+    if (typeof (window['Reveal']) !== 'undefined') {
+      function mermaidRevealHelper(event) {
+        var currentSlide = event.currentSlide
+        var diagrams = currentSlide.querySelectorAll('.mermaid')
+        for (var i = 0; i < diagrams.length; i++) {
+          var diagram = diagrams[i]
+          if (!diagram.hasAttribute('data-processed')) {
+            mermaid.init(null, diagram, () => {
+              Reveal.slide(event.indexh, event.indexv)
+            })
+          }
+        }
+      }
+      Reveal.addEventListener('slidetransitionend', mermaidRevealHelper)
+      Reveal.addEventListener('ready', mermaidRevealHelper)
+      await mermaid.run({
+        nodes: document.querySelectorAll('.mermaid')
+      })
+    } else {
+      await mermaid.run({
+        nodes: document.querySelectorAll('.mermaid')
+      })
+    }
+  </script>
+
+
+
+
+</body>
+
+</html>

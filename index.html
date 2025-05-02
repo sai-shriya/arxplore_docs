@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>ARXplore v1.0 Documentation</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="katex.min.css">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="modern-theme.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code&display=swap" rel="stylesheet">
+
+  <script type="text/javascript" src="mermaid.min.js" charset="UTF-8"></script>
+  <script type="text/javascript" src="sidebar.js"></script>
+</head>
+
+<body for="html-export">
+
+
+    <main class="main-content">
+      <div class="crossnote markdown-preview">
+        <h1 id="tutorial-ARXplore v1.0">Tutorial: ARXplore v1.0</h1>
+        <p>ARXplore v1.0 is a web tool designed to help users view and understand <em>Automotive Open System Architecture</em>
+          (ARXML) or standard XML files.<br>
+          Users can upload one or two files, which are then <strong>parsed</strong> and displayed as interactive
+          <em>hierarchical tree views</em>.<br>
+          When two files are provided, the tool performs a side-by-side <strong>comparison</strong>, visually
+          <strong>highlighting</strong> additions, deletions, and modifications.<br>
+          Additionally, it features an optional <em>AI-powered analysis</em> to generate a natural language summary of the
+          detected differences.
+        </p>
+        <p><strong>Source Repository:</strong> <a href="None">None</a></p>
+        <div class="mermaid">flowchart TD
+          A0["ARXML File Processing
+          "]
+          A1["Frontend Data Representation
+          "]
+          A2["Dynamic Tree View Rendering
+          "]
+          A3["Client-Side Comparison Logic
+          "]
+          A4["Difference Visualization &amp; Sync
+          "]
+          A5["UI State Management &amp; Interaction
+          "]
+          A6["AI Difference Analysis
+          "]
+          A0 -- "Produces Parsed Data" --&gt; A1
+          A1 -- "Provides Data for Tree" --&gt; A2
+          A1 -- "Provides Data for Comparison" --&gt; A3
+          A3 -- "Generates Differences For" --&gt; A4
+          A4 -- "Visualizes Differences On Tree" --&gt; A2
+          A5 -- "Triggers File Processing" --&gt; A0
+          A5 -- "Manages Tree Display" --&gt; A2
+          A5 -- "Initiates Comparison" --&gt; A3
+          A5 -- "Triggers AI Analysis" --&gt; A6
+          A3 -- "Provides Diff Summary For" --&gt; A6
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script type="module">
+    // Mermaid configuration
+    var MERMAID_CONFIG = ({ "startOnLoad": false });
+    if (typeof MERMAID_CONFIG !== 'undefined') {
+      MERMAID_CONFIG.startOnLoad = false
+      MERMAID_CONFIG.cloneCssStyles = false
+      MERMAID_CONFIG.theme = "default"
+    }
+
+    mermaid.initialize(MERMAID_CONFIG || {})
+    
+    // Initialize mermaid diagrams
+    if (typeof (window['Reveal']) !== 'undefined') {
+      function mermaidRevealHelper(event) {
+        var currentSlide = event.currentSlide
+        var diagrams = currentSlide.querySelectorAll('.mermaid')
+        for (var i = 0; i < diagrams.length; i++) {
+          var diagram = diagrams[i]
+          if (!diagram.hasAttribute('data-processed')) {
+            mermaid.init(null, diagram, () => {
+              Reveal.slide(event.indexh, event.indexv)
+            })
+          }
+        }
+      }
+      Reveal.addEventListener('slidetransitionend', mermaidRevealHelper)
+      Reveal.addEventListener('ready', mermaidRevealHelper)
+      await mermaid.run({
+        nodes: document.querySelectorAll('.mermaid')
+      })
+    } else {
+      await mermaid.run({
+        nodes: document.querySelectorAll('.mermaid')
+      })
+    }
+  </script>
+</body>
+
+</html>
