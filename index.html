@@ -25336,10 +25336,8 @@
             <ul class="nav-links">
                 <li><a href="#overview">Overview</a></li>
                 <li><a href="#development">Development</a></li>
-                <li><a href="#setup">Setup</a></li>
-                
+                <li><a href="#setup">Setup</a></li>  
                 <li><a href="#testing">Testing</a></li>
-                <li><a href="#limitations">Limitations</a></li>
                 <li><a href="#technologies">Technologies</a></li>
                 <li><a href="#conclusion">Future Works</a></li>
             </ul>
@@ -26034,12 +26032,12 @@ Provide analysis covering:
                 
                 <div class="development-tabs">
                     <div class="tab-buttons">
-                        <button class="tab-btn active" data-tab="approach1">Approach 1: Web-Based Visualization</button>
-                        <button class="tab-btn" data-tab="approach2">Approach 2: Python-Based Analysis</button>
+                        <button class="tab-btn active" data-tab="approach1">Approach 1</button>
+                        <button class="tab-btn" data-tab="approach2">Approach 2</button>
                     </div>
                     
                     <div class="tab-content active" id="approach1">
-                        <h3>Approach 1: Web-Based Visualization</h3>
+                        <h3>Approach 1</h3>
                         <p>This approach focuses on providing a web interface for ARXML file visualization and comparison with interactive tree views.</p>
                         <br>
                         <div class="approach-section">
@@ -26061,56 +26059,18 @@ Provide analysis covering:
                             <p>For Code documentation <a href="compare/index.html">click here</a></p>
                         </div>
                         
-                        <div class="approach-section">
-                            <h4><i class="fas fa-tools"></i> 3. Technology Stack</h4>
-                            <div class="tech-stack-table">
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>Component</th>
-                                            <th>Technology/Tool</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td>Web Interface</td>
-                                            <td><a href="https://streamlit.io/" target="_blank">Streamlit</a></td>
-                                        </tr>
-                                        <tr>
-                                            <td>XML Parsing</td>
-                                            <td><code>xml.etree.ElementTree</code>, <code>lxml</code>, <code>xmltodict</code></td>
-                                        </tr>
-                                        <tr>
-                                            <td>File Comparison Logic</td>
-                                            <td>Custom recursive diffing algorithm</td>
-                                        </tr>
-                                        <tr>
-                                            <td>AI Integration</td>
-                                            <td>LLMs (e.g., Google Gemini, OpenAI GPT)</td>
-                                        </tr>
-                                        <tr>
-                                            <td>Tree Visualization</td>
-                                            <td>Streamlit's custom components + JSON rendering</td>
-                                        </tr>
-                                        <tr>
-                                            <td>State Management & Sync</td>
-                                            <td>Streamlit session state + scroll sync logic</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                        
                         
                         <div class="approach-section">
-                            <h4><i class="fas fa-project-diagram"></i> 4. Architecture Diagram</h4>
+                            <h4><i class="fas fa-project-diagram"></i> 3. Architecture Diagram</h4>
                             <div class="architecture-diagram">
                                 <img src="web-archi.png" style="height: 500px;" alt="Web-Based Architecture Diagram" class="full-width-img">
-                                <p class="diagram-caption">Web-based architecture with client-side processing and visualization components</p>
+                                <p class="diagram-caption">Approach1 architecture with client-side processing and visualization components</p>
                             </div>
                         </div>
                         
                         <div class="approach-section">
-                            <h4><i class="fas fa-code-branch"></i> 5. Development Phases</h4>
+                            <h4><i class="fas fa-code-branch"></i> 4. Development Phases</h4>
                             
                             <div class="dev-phase">
                                 <h5><span class="phase-tag">Phase A</span> Input Handling and XML Parsing</h5>
@@ -26175,7 +26135,7 @@ Provide analysis covering:
                         </div>
                         
                         <div class="approach-section">
-                            <h4><i class="fas fa-box-open"></i> 6. Deliverable Summary (v1.0)</h4>
+                            <h4><i class="fas fa-box-open"></i> 5. Deliverable Summary (v1.0)</h4>
                             <div class="deliverable-card">
                                 <p>ARXplore v1.0 delivers the following functionality:</p>
                                 <ul>
@@ -26189,7 +26149,7 @@ Provide analysis covering:
                         </div>
                         
                         <div class="approach-section">
-                            <h4><i class="fas fa-flag-checkered"></i> 7. Conclusion</h4>
+                            <h4><i class="fas fa-flag-checkered"></i> 6. Conclusion</h4>
                             <p>ARXplore represents a hybrid solution combining traditional XML processing techniques with AI-driven insights and interactive visualization. Its modular architecture enables both technical accuracy and user accessibility, making it a valuable tool for AUTOSAR-based development environments.</p>
                         </div>
                         
@@ -26197,8 +26157,8 @@ Provide analysis covering:
                     </div>
                     
                     <div class="tab-content" id="approach2">
-                        <h3>Approach 2: Python-Based Analysis</h3>
-                        <p>This approach implements a comprehensive Python-based tool with advanced validation, analysis, and AI integration.</p>
+                        <h3>Approach 2</h3>
+                        <p>This approach implements a comprehensive  tool with advanced validation, analysis, and AI integration.</p>
                         
                         <div class="approach-section">
                             <h4><i class="fas fa-lightbulb"></i> 1. Project Motivation</h4>
@@ -26219,7 +26179,7 @@ Provide analysis covering:
                             <h4><i class="fas fa-project-diagram"></i> 2. Architecture Diagram</h4>
                             <div class="architecture-diagram">
                                 <img src="phy-archi.png" style="height: 500px;" alt="Python-Based Architecture Diagram" class="full-width-img">
-                                <p class="diagram-caption">Python-based architecture with advanced analysis and AI integration components</p>
+                                <p class="diagram-caption">Approach2 architecture with advanced analysis and AI integration components</p>
                             </div>
                         </div>
                         
@@ -26381,12 +26341,12 @@ Provide analysis covering:
                     
                     <div class="testing-tabs">
                         <div class="tab-buttons">
-                            <button class="test-tab-btn active" data-tab="test1">Web Approach Testing</button>
-                            <button class="test-tab-btn" data-tab="test2">Python Approach Testing</button>
+                            <button class="test-tab-btn active" data-tab="test1">Approach 1</button>
+                            <button class="test-tab-btn" data-tab="test2">Approach 2</button>
                         </div>
                         
                         <div class="test-tab-content active" id="test1">
-                            <h3>Web Approach Testing</h3>
+                            <h3>Approach 1</h3>
                             <div class="test-table">
                                 <h4>Test Cases</h4>
                                 <table>
@@ -26439,7 +26399,7 @@ Provide analysis covering:
                         </div>
                         
                         <div class="test-tab-content" id="test2">
-                            <h3>Python Approach Testing</h3>
+                            <h3>Approach 2</h3>
                             <div class="test-table">
                                 <h4>Test Cases</h4>
                                 <table>
@@ -26459,7 +26419,7 @@ Provide analysis covering:
                                         <tr>
                                             <td>Schema Validation</td>
                                             <td>Test validation against multiple AUTOSAR schemas</td>
-                                            <td><span class="passed">Passed</span></td>
+                                            <td><span class="partial">To be done</span></td>
                                         </tr>
                                         <tr>
                                             <td>AI Integration</td>
@@ -26496,168 +26456,22 @@ Provide analysis covering:
             </div>
         </section>
 
-        <section id="limitations" class="limitations-section" style="background-color: #f9f9ff; padding: 4rem 0;">
-            <div class="container">
-                <h2>Limitations & Troubleshooting</h2>
-                
-                <div class="limitations-content" style="display: flex; flex-wrap: wrap; gap: 2.5rem; margin-bottom: 3rem;">
-                    <div class="limitations-list" style="flex: 1; min-width: 300px;">
-                        <div style="background: linear-gradient(135deg, #b794e8, #cbb0ea); color: #4b2e83; border-radius: 12px 12px 0 0; padding: 1.5rem; text-align: center;">
-                            <h3 style="margin: 0; font-size: 1.6rem; font-weight: 600;">Current Limitations</h3>
-                        </div>
-                        
-                        <div style="background-color: white; border-radius: 0 0 12px 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); overflow: hidden;">
-                            <div class="limitation-item" style="padding: 1.5rem; border-bottom: 1px solid #eee; display: flex; align-items: flex-start;">
-                                <div style="background-color: rgba(95, 31, 160, 0.1); border-radius: 50%; width: 40px; height: 40px; min-width: 40px; display: flex; align-items: center; justify-content: center; margin-right: 1rem;">
-                                    <i class="fas fa-file-alt" style="color: #5f1fa0;"></i>
-                                </div>
-                                <div>
-                                    <h4 style="margin: 0 0 0.5rem 0; color: #333;">File Size Constraints</h4>
-                                    <p style="margin: 0; color: #666;">The web-based approach has performance limitations with ARXML files exceeding 20MB. The Python approach handles larger files but may experience performance degradation over 50MB.</p>
-                                </div>
-                            </div>
-                            
-                            <div class="limitation-item" style="padding: 1.5rem; border-bottom: 1px solid #eee; display: flex; align-items: flex-start;">
-                                <div style="background-color: rgba(95, 31, 160, 0.1); border-radius: 50%; width: 40px; height: 40px; min-width: 40px; display: flex; align-items: center; justify-content: center; margin-right: 1rem;">
-                                    <i class="fas fa-project-diagram" style="color: #5f1fa0;"></i>
-                                </div>
-                                <div>
-                                    <h4 style="margin: 0 0 0.5rem 0; color: #333;">Schema Support</h4>
-                                    <p style="margin: 0; color: #666;">Currently supports AUTOSAR versions 4.0.3 to 4.3.0. Earlier versions or custom schemas may have limited validation support.</p>
-                                </div>
-                            </div>
-                            
-                            <div class="limitation-item" style="padding: 1.5rem; border-bottom: 1px solid #eee; display: flex; align-items: flex-start;">
-                                <div style="background-color: rgba(95, 31, 160, 0.1); border-radius: 50%; width: 40px; height: 40px; min-width: 40px; display: flex; align-items: center; justify-content: center; margin-right: 1rem;">
-                                    <i class="fas fa-brain" style="color: #5f1fa0;"></i>
-                                </div>
-                                <div>
-                                    <h4 style="margin: 0 0 0.5rem 0; color: #333;">AI Integration Dependencies</h4>
-                                    <p style="margin: 0; color: #666;">The AI analysis features require a valid Google API key and internet connectivity. Offline mode has limited functionality.</p>
-                                </div>
-                            </div>
-                            
-                            <div class="limitation-item" style="padding: 1.5rem; display: flex; align-items: flex-start;">
-                                <div style="background-color: rgba(95, 31, 160, 0.1); border-radius: 50%; width: 40px; height: 40px; min-width: 40px; display: flex; align-items: center; justify-content: center; margin-right: 1rem;">
-                                    <i class="fas fa-window-restore" style="color: #5f1fa0;"></i>
-                                </div>
-                                <div>
-                                    <h4 style="margin: 0 0 0.5rem 0; color: #333;">Browser Compatibility</h4>
-                                    <p style="margin: 0; color: #666;">The web interface is optimized for modern browsers. Legacy browsers may experience rendering issues or reduced performance.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="troubleshooting" style="flex: 1; min-width: 300px;">
-                        <div style="background: linear-gradient(135deg, #b794e8, #cbb0ea); color: #4b2e83; border-radius: 12px 12px 0 0; padding: 1.5rem; text-align: center;">
-                            <h3 style="margin: 0; font-size: 1.6rem; font-weight: 600;">Troubleshooting Guide</h3>
-                        </div>
-                        
-                        <div style="background-color: white; border-radius: 0 0 12px 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); overflow: hidden;">
-                            <div class="troubleshooting-item" style="padding: 1.5rem; border-bottom: 1px solid #eee; display: flex; align-items: flex-start;">
-                                <div style="background-color: rgba(95, 31, 160, 0.1); border-radius: 50%; width: 40px; height: 40px; min-width: 40px; display: flex; align-items: center; justify-content: center; margin-right: 1rem;">
-                                    <i class="fas fa-file-upload" style="color: #5f1fa0;"></i>
-                                </div>
-                                <div>
-                                    <h4 style="margin: 0 0 0.5rem 0; color: #333;">File Upload Fails</h4>
-                                    <p style="margin: 0; color: #666;">Check that the file is a valid ARXML file with .arxml or .xml extension. Verify file size is under the recommended limit.</p>
-                                </div>
-                            </div>
-                            
-                            <div class="troubleshooting-item" style="padding: 1.5rem; border-bottom: 1px solid #eee; display: flex; align-items: flex-start;">
-                                <div style="background-color: rgba(95, 31, 160, 0.1); border-radius: 50%; width: 40px; height: 40px; min-width: 40px; display: flex; align-items: center; justify-content: center; margin-right: 1rem;">
-                                    <i class="fas fa-check-circle" style="color: #5f1fa0;"></i>
-                                </div>
-                                <div>
-                                    <h4 style="margin: 0 0 0.5rem 0; color: #333;">Schema Validation Errors</h4>
-                                    <p style="margin: 0; color: #666;">Verify the correct AUTOSAR version is selected. Check file for syntax errors or schema incompatibilities.</p>
-                                </div>
-                            </div>
-                            
-                            <div class="troubleshooting-item" style="padding: 1.5rem; border-bottom: 1px solid #eee; display: flex; align-items: flex-start;">
-                                <div style="background-color: rgba(95, 31, 160, 0.1); border-radius: 50%; width: 40px; height: 40px; min-width: 40px; display: flex; align-items: center; justify-content: center; margin-right: 1rem;">
-                                    <i class="fas fa-robot" style="color: #5f1fa0;"></i>
-                                </div>
-                                <div>
-                                    <h4 style="margin: 0 0 0.5rem 0; color: #333;">AI Features Not Working</h4>
-                                    <p style="margin: 0; color: #666;">Confirm Google API key is properly set in .env file and API quota is not exceeded. Verify internet connectivity.</p>
-                                </div>
-                            </div>
-                            
-                            <div class="troubleshooting-item" style="padding: 1.5rem; border-bottom: 1px solid #eee; display: flex; align-items: flex-start;">
-                                <div style="background-color: rgba(95, 31, 160, 0.1); border-radius: 50%; width: 40px; height: 40px; min-width: 40px; display: flex; align-items: center; justify-content: center; margin-right: 1rem;">
-                                    <i class="fas fa-tachometer-alt" style="color: #5f1fa0;"></i>
-                                </div>
-                                <div>
-                                    <h4 style="margin: 0 0 0.5rem 0; color: #333;">Performance Issues</h4>
-                                    <p style="margin: 0; color: #666;">For large files, try the Python implementation with increased memory allocation. Use the file splitting utility for very large files.</p>
-                                </div>
-                            </div>
-                            
-                            <div class="troubleshooting-item" style="padding: 1.5rem; display: flex; align-items: flex-start;">
-                                <div style="background-color: rgba(95, 31, 160, 0.1); border-radius: 50%; width: 40px; height: 40px; min-width: 40px; display: flex; align-items: center; justify-content: center; margin-right: 1rem;">
-                                    <i class="fas fa-desktop" style="color: #5f1fa0;"></i>
-                                </div>
-                                <div>
-                                    <h4 style="margin: 0 0 0.5rem 0; color: #333;">Visualization Problems</h4>
-                                    <p style="margin: 0; color: #666;">Try a different browser (Chrome or Firefox recommended). Clear browser cache and reload the application.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                
-            </div>
-        </section>
-
         <section id="technologies" class="technologies-section">
             <div class="container">
                 <h2>Tools & Technologies</h2>
                 <div class="technologies-content">
-                    <div class="tech-category">
-                        <h3>Web Approach</h3>
-                        <div class="tech-grid" style="grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem;">
-                            <div class="tech-item" style="padding: 1rem;">
-                                <div class="tech-icon" style="font-size: 2rem; margin-bottom: 0.5rem;"><i class="fab fa-js"></i></div>
-                                <h4 style="font-size: 0.95rem; margin-bottom: 0.3rem;">JavaScript (ES6+)</h4>
-                                <p style="font-size: 0.8rem; margin: 0;">Core programming language</p>
-                            </div>
-                            <div class="tech-item" style="padding: 1rem;">
-                                <div class="tech-icon" style="font-size: 2rem; margin-bottom: 0.5rem;"><i class="fab fa-react"></i></div>
-                                <h4 style="font-size: 0.95rem; margin-bottom: 0.3rem;">React</h4>
-                                <p style="font-size: 0.8rem; margin: 0;">UI component library</p>
-                            </div>
-                            <div class="tech-item" style="padding: 1rem;">
-                                <div class="tech-icon" style="font-size: 2rem; margin-bottom: 0.5rem;"><i class="fas fa-code"></i></div>
-                                <h4 style="font-size: 0.95rem; margin-bottom: 0.3rem;">XML DOM API</h4>
-                                <p style="font-size: 0.8rem; margin: 0;">XML processing</p>
-                            </div>
-                            <div class="tech-item" style="padding: 1rem;">
-                                <div class="tech-icon" style="font-size: 2rem; margin-bottom: 0.5rem;"><i class="fab fa-css3"></i></div>
-                                <h4 style="font-size: 0.95rem; margin-bottom: 0.3rem;">CSS3/SASS</h4>
-                                <p style="font-size: 0.8rem; margin: 0;">Styling and animations</p>
-                            </div>
-                            <div class="tech-item" style="padding: 1rem;">
-                                <div class="tech-icon" style="font-size: 2rem; margin-bottom: 0.5rem;"><i class="fab fa-npm"></i></div>
-                                <h4 style="font-size: 0.95rem; margin-bottom: 0.3rem;">npm</h4>
-                                <p style="font-size: 0.8rem; margin: 0;">Package management</p>
-                            </div>
-                            <div class="tech-item" style="padding: 1rem;">
-                                <div class="tech-icon" style="font-size: 2rem; margin-bottom: 0.5rem;"><i class="fas fa-vial"></i></div>
-                                <h4 style="font-size: 0.95rem; margin-bottom: 0.3rem;">Jest</h4>
-                                <p style="font-size: 0.8rem; margin: 0;">Testing framework</p>
-                            </div>
-                        </div>
-                    </div>
                     
                     <div class="tech-category">
-                        <h3><br>Python Approach</h3>
+                        
                         <div class="tech-grid" style="grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem;">
                             <div class="tech-item" style="padding: 1rem;">
                                 <div class="tech-icon" style="font-size: 2rem; margin-bottom: 0.5rem;"><i class="fab fa-python"></i></div>
                                 <h4 style="font-size: 0.95rem; margin-bottom: 0.3rem;">Python 3.9+</h4>
+                                <p style="font-size: 0.8rem; margin: 0;">Core programming language</p>
+                            </div>
+                            <div class="tech-item" style="padding: 1rem;">
+                                <div class="tech-icon" style="font-size: 2rem; margin-bottom: 0.5rem;"><i class="fab fa-js"></i></div>
+                                <h4 style="font-size: 0.95rem; margin-bottom: 0.3rem;">JavaScript (ES6+)</h4>
                                 <p style="font-size: 0.8rem; margin: 0;">Core programming language</p>
                             </div>
                             <div class="tech-item" style="padding: 1rem;">
@@ -26676,6 +26490,11 @@ Provide analysis covering:
                                 <p style="font-size: 0.8rem; margin: 0;">XML processing library</p>
                             </div>
                             <div class="tech-item" style="padding: 1rem;">
+                                <div class="tech-icon" style="font-size: 2rem; margin-bottom: 0.5rem;"><i class="fab fa-css3"></i></div>
+                                <h4 style="font-size: 0.95rem; margin-bottom: 0.3rem;">CSS3/SASS</h4>
+                                <p style="font-size: 0.8rem; margin: 0;">Styling and animations</p>
+                            </div>
+                            <div class="tech-item" style="padding: 1rem;">
                                 <div class="tech-icon" style="font-size: 2rem; margin-bottom: 0.5rem;"><i class="fas fa-chart-bar"></i></div>
                                 <h4 style="font-size: 0.95rem; margin-bottom: 0.3rem;">Plotly</h4>
                                 <p style="font-size: 0.8rem; margin: 0;">Data visualization</p>
@@ -26688,31 +26507,7 @@ Provide analysis covering:
                         </div>
                     </div>
                     
-                    <div class="tech-category">
-                        <h3><br>Development Tools</h3>
-                        <div class="tech-grid" style="grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem;">
-                            <div class="tech-item" style="padding: 1rem;">
-                                <div class="tech-icon" style="font-size: 2rem; margin-bottom: 0.5rem;"><i class="fab fa-git-alt"></i></div>
-                                <h4 style="font-size: 0.95rem; margin-bottom: 0.3rem;">Git</h4>
-                                <p style="font-size: 0.8rem; margin: 0;">Version control</p>
-                            </div>
-                            <div class="tech-item" style="padding: 1rem;">
-                                <div class="tech-icon" style="font-size: 2rem; margin-bottom: 0.5rem;"><i class="fab fa-github"></i></div>
-                                <h4 style="font-size: 0.95rem; margin-bottom: 0.3rem;">GitHub</h4>
-                                <p style="font-size: 0.8rem; margin: 0;">Repository hosting</p>
-                            </div>
-                            <div class="tech-item" style="padding: 1rem;">
-                                <div class="tech-icon" style="font-size: 2rem; margin-bottom: 0.5rem;"><i class="fas fa-code-branch"></i></div>
-                                <h4 style="font-size: 0.95rem; margin-bottom: 0.3rem;">pre-commit</h4>
-                                <p style="font-size: 0.8rem; margin: 0;">Git hooks framework</p>
-                            </div>
-                            <div class="tech-item" style="padding: 1rem;">
-                                <div class="tech-icon" style="font-size: 2rem; margin-bottom: 0.5rem;"><i class="fas fa-tasks"></i></div>
-                                <h4 style="font-size: 0.95rem; margin-bottom: 0.3rem;">pytest</h4>
-                                <p style="font-size: 0.8rem; margin: 0;">Testing framework</p>
-                            </div>
-                        </div>
-                    </div>
+                    
                 </div>
             </div>
         </section>
