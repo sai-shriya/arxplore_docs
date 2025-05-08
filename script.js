@@ -70,22 +70,6 @@ function initButtonHandlers() {
     const demoButtons = document.querySelectorAll('.demo-btn, .secondary-btn');
     const startTrialButtons = document.querySelectorAll('.primary-btn');
     
-    // Demo button handlers
-    demoButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            // In a real app, this would open a demo request form
-            alert('Thank you for your interest in ARXplore! A demo request form would open here.');
-        });
-    });
-    
-    // Start trial button handlers
-    startTrialButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            // In a real app, this would redirect to registration
-            alert('Thank you for your interest in ARXplore! You would be redirected to a trial registration page.');
-        });
-    });
-    
     // Video play button handler
     const playButton = document.querySelector('.play-button');
     if (playButton) {
